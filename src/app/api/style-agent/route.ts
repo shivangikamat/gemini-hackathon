@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateStyleMashupWithGemini } from "@/lib/gemini";
-import type { HairstyleSuggestion } from "@/lib/types";
+import type { HairstyleSuggestion, StyleAgentTurn } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -10,6 +10,7 @@ export async function POST(request: Request) {
       preferences?: string;
       currentStyle?: string | null;
       suggestions?: HairstyleSuggestion[];
+      conversationHistory?: StyleAgentTurn[];
     };
 
     const suggestions = Array.isArray(body.suggestions)
@@ -32,6 +33,14 @@ export async function POST(request: Request) {
       preferences: body.preferences || "",
       suggestions,
       currentStyle: body.currentStyle || null,
+      conversationHistory: Array.isArray(body.conversationHistory)
+        ? body.conversationHistory.filter(
+            (turn) =>
+              turn &&
+              (turn.speaker === "user" || turn.speaker === "agent") &&
+              typeof turn.text === "string"
+          )
+        : [],
     });
 
     return NextResponse.json(response);

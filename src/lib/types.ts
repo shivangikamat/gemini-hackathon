@@ -9,6 +9,11 @@ export type HairstyleSuggestion = {
   reason: string;
 };
 
+export type StyleAgentTurn = {
+  speaker: "user" | "agent";
+  text: string;
+};
+
 export type Salon = {
   id: string;
   name: string;

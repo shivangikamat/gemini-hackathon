@@ -9,11 +9,13 @@ import {
   Video,
   Wand2,
   Volume2,
+  VolumeX,
 } from "lucide-react";
 import type {
   HairOverlayConfig,
   HairstyleSuggestion,
   StyleAgentResponse,
+  StyleAgentTurn,
 } from "@/lib/types";
 import { createOverlayFromStyle } from "@/lib/styleStudio";
 import HairstyleOverlay from "./HairstyleOverlay";
@@ -60,6 +62,9 @@ const QUICK_PROMPTS = [
   "Edgy texture, volume, and a little runway energy.",
 ];
 
+const INITIAL_AGENT_REPLY =
+  "Turn on the webcam or use your uploaded selfie, then tell the agent what vibe you want. I’ll turn that into a live preview-friendly mashup.";
+
 function getSpeechRecognitionConstructor():
   | SpeechRecognitionConstructor
   | undefined {
@@ -91,9 +96,7 @@ export default function LiveStyleStudio({
     createOverlayFromStyle(previewStyle)
   );
   const [mashupName, setMashupName] = useState(previewStyle);
-  const [agentReply, setAgentReply] = useState(
-    "Turn on the webcam or use your uploaded selfie, then tell the agent what vibe you want. I’ll turn that into a live preview-friendly mashup."
-  );
+  const [agentReply, setAgentReply] = useState(INITIAL_AGENT_REPLY);
   const [preferences, setPreferences] = useState("");
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -101,6 +104,15 @@ export default function LiveStyleStudio({
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentSummary, setAgentSummary] = useState("Live overlay ready");
+  const [voiceReplyEnabled, setVoiceReplyEnabled] = useState(true);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [sessionTurns, setSessionTurns] = useState<StyleAgentTurn[]>([
+    {
+      speaker: "agent",
+      text: INITIAL_AGENT_REPLY,
+    },
+  ]);
 
   useEffect(() => {
     if (skipSyncStyleRef.current === previewStyle) {
@@ -113,9 +125,17 @@ export default function LiveStyleStudio({
   }, [preferences, previewStyle]);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      setSpeechSupported("speechSynthesis" in window);
+    }
+
     return () => {
       recognitionRef.current?.stop();
       streamRef.current?.getTracks().forEach((track) => track.stop());
+
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
     };
   }, []);
 
@@ -213,7 +233,51 @@ export default function LiveStyleStudio({
     setVoiceError(null);
   };
 
+  const stopSpeaking = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    setSpeaking(false);
+  };
+
+  const speakReply = (text: string) => {
+    if (
+      typeof window === "undefined" ||
+      !("speechSynthesis" in window) ||
+      !text.trim()
+    ) {
+      return;
+    }
+
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+    const preferredVoice = synth
+      .getVoices()
+      .find((voice) => voice.lang.toLowerCase().startsWith("en"));
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    utterance.rate = 0.97;
+    utterance.pitch = 1.02;
+    utterance.onstart = () => setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+
+    synth.cancel();
+    synth.speak(utterance);
+  };
+
   const handleAgentSubmit = async () => {
+    const trimmedPreferences = preferences.trim();
+
+    if (speechSupported) {
+      stopSpeaking();
+    }
+
     setAgentLoading(true);
     setVoiceError(null);
 
@@ -227,6 +291,7 @@ export default function LiveStyleStudio({
           preferences,
           currentStyle: selectedStyle,
           suggestions,
+          conversationHistory: sessionTurns.slice(-6),
         }),
       });
 
@@ -245,7 +310,22 @@ export default function LiveStyleStudio({
       setMashupName(data.mashupName);
       setAgentReply(data.agentReply);
       setAgentSummary(data.preferencesSummary);
+      setSessionTurns((currentTurns) => {
+        const nextTurns: StyleAgentTurn[] = trimmedPreferences
+          ? [
+              ...currentTurns,
+              { speaker: "user", text: trimmedPreferences },
+              { speaker: "agent", text: data.agentReply },
+            ]
+          : [...currentTurns, { speaker: "agent", text: data.agentReply }];
+
+        return nextTurns.slice(-6);
+      });
       onSelectStyle(data.selectedStyle);
+
+      if (voiceReplyEnabled && speechSupported) {
+        speakReply(data.agentReply);
+      }
     } catch (error) {
       setVoiceError(
         error instanceof Error
@@ -383,8 +463,9 @@ export default function LiveStyleStudio({
             </h3>
             <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
               Ask for softness, polish, edge, lower maintenance, or a little
-              more drama. The agent will rebalance the live overlay and choose
-              the strongest stylist-ready mashup.
+              more drama. The agent will rebalance the live overlay, remember
+              your last few turns, and speak the strongest stylist-ready mashup
+              back to you.
             </p>
           </div>
 
@@ -407,6 +488,39 @@ export default function LiveStyleStudio({
               placeholder="Type or dictate your preferences here..."
               className="mt-5 min-h-[180px] w-full rounded-[1.8rem] border border-white/10 bg-slate-950/85 p-5 text-sm leading-relaxed text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-400/40"
             />
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  if (speaking) {
+                    stopSpeaking();
+                  }
+
+                  setVoiceReplyEnabled((current) => !current);
+                }}
+                disabled={!speechSupported}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-cyan-400/30 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {voiceReplyEnabled ? (
+                  <Volume2 className="h-3.5 w-3.5" />
+                ) : (
+                  <VolumeX className="h-3.5 w-3.5" />
+                )}
+                {speechSupported
+                  ? voiceReplyEnabled
+                    ? "Voice reply on"
+                    : "Voice reply muted"
+                  : "Voice reply unavailable"}
+              </button>
+              <div className="rounded-full border border-white/10 bg-slate-950/60 px-3 py-1.5 text-xs font-medium text-slate-400">
+                Session memory {sessionTurns.length} turns
+              </div>
+              {speaking && (
+                <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-200">
+                  Speaking live response
+                </div>
+              )}
+            </div>
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <button
@@ -438,12 +552,73 @@ export default function LiveStyleStudio({
           </div>
 
           <div className="mt-5 rounded-[2rem] border border-white/10 bg-slate-950/68 p-5 backdrop-blur">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Stylist Response
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Stylist Response
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => speakReply(agentReply)}
+                  disabled={!speechSupported || !agentReply.trim()}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-cyan-400/30 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Volume2 className="h-3.5 w-3.5" />
+                  Hear response
+                </button>
+                {speaking && (
+                  <button
+                    onClick={stopSpeaking}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-rose-400/30 hover:text-rose-200"
+                  >
+                    <VolumeX className="h-3.5 w-3.5" />
+                    Stop voice
+                  </button>
+                )}
+              </div>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-slate-200">
               {agentReply}
             </p>
+            <div className="mt-4 rounded-[1.35rem] border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-slate-400">
+              The agent now keeps the recent conversation in play, so follow-up
+              requests like softer, shorter, or more editorial build on the
+              previous direction instead of resetting the session.
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Session Memory
+              </div>
+              <div className="text-xs text-slate-500">
+                Last {Math.min(sessionTurns.length, 6)} turns
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {sessionTurns.slice(-4).map((turn, index) => (
+                <div
+                  key={`${turn.speaker}-${index}-${turn.text.slice(0, 24)}`}
+                  className={`max-w-[92%] rounded-[1.5rem] border px-4 py-3 ${
+                    turn.speaker === "user"
+                      ? "ml-auto border-cyan-400/20 bg-cyan-400/10 text-cyan-50"
+                      : "border-white/10 bg-slate-950/65 text-slate-100"
+                  }`}
+                >
+                  <div
+                    className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                      turn.speaker === "user"
+                        ? "text-cyan-200"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    {turn.speaker === "user" ? "You" : "Stylist"}
+                  </div>
+                  <p className="mt-1 text-sm leading-relaxed">{turn.text}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

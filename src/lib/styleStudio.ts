@@ -2,6 +2,7 @@ import type {
   HairColorName,
   HairOverlayConfig,
   HairstyleSuggestion,
+  StyleAgentTurn,
   StyleAgentResponse,
 } from "./types";
 
@@ -175,6 +176,19 @@ export function getOverlayPalette(colorName: HairColorName): OverlayPalette {
   return PALETTES[colorName];
 }
 
+export function buildLivePreferenceContext(
+  preferences: string,
+  conversationHistory: StyleAgentTurn[] = []
+) {
+  const priorUserTurns = conversationHistory
+    .filter((turn) => turn.speaker === "user")
+    .map((turn) => turn.text.trim())
+    .filter(Boolean)
+    .slice(-2);
+
+  return [...priorUserTurns, preferences.trim()].filter(Boolean).join(" ").trim();
+}
+
 function scoreStyleMatch(style: HairstyleSuggestion, preferences: string) {
   const styleName = style.name.toLowerCase();
   const text = preferences.toLowerCase();
@@ -271,8 +285,13 @@ function summarizePreferences(preferences: string) {
 export function createFallbackStyleAgentResponse(
   preferences: string,
   suggestions: HairstyleSuggestion[],
-  currentStyle?: string | null
+  currentStyle?: string | null,
+  conversationHistory: StyleAgentTurn[] = []
 ): StyleAgentResponse {
+  const effectivePreferences = buildLivePreferenceContext(
+    preferences,
+    conversationHistory
+  );
   const safeSuggestions =
     suggestions.length > 0
       ? suggestions
@@ -288,13 +307,13 @@ export function createFallbackStyleAgentResponse(
       .map((suggestion) => ({
         suggestion,
         score:
-          scoreStyleMatch(suggestion, preferences) +
+          scoreStyleMatch(suggestion, effectivePreferences) +
           (suggestion.name === currentStyle ? 2 : 0),
       }))
       .sort((a, b) => b.score - a.score)[0]?.suggestion || safeSuggestions[0];
 
-  const overlay = createOverlayFromStyle(selected.name, preferences);
-  const summary = summarizePreferences(preferences);
+  const overlay = createOverlayFromStyle(selected.name, effectivePreferences);
+  const summary = summarizePreferences(effectivePreferences);
 
   return {
     selectedStyle: selected.name,

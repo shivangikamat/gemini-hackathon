@@ -3,9 +3,13 @@ import type {
   FaceProfile,
   HairOverlayConfig,
   HairstyleSuggestion,
+  StyleAgentTurn,
   StyleAgentResponse,
 } from "./types";
-import { createFallbackStyleAgentResponse } from "./styleStudio";
+import {
+  buildLivePreferenceContext,
+  createFallbackStyleAgentResponse,
+} from "./styleStudio";
 
 type GeminiFaceResponse = {
   faceProfile: FaceProfile;
@@ -88,12 +92,14 @@ function sanitizeAgentResponse(
   candidate: unknown,
   preferences: string,
   suggestions: HairstyleSuggestion[],
-  currentStyle?: string | null
+  currentStyle?: string | null,
+  conversationHistory: StyleAgentTurn[] = []
 ): StyleAgentResponse {
   const fallback = createFallbackStyleAgentResponse(
     preferences,
     suggestions,
-    currentStyle
+    currentStyle,
+    conversationHistory
   );
 
   if (!candidate || typeof candidate !== "object") {
@@ -244,12 +250,19 @@ export async function generateStyleMashupWithGemini(params: {
   preferences: string;
   suggestions: HairstyleSuggestion[];
   currentStyle?: string | null;
+  conversationHistory?: StyleAgentTurn[];
 }): Promise<StyleAgentResponse> {
-  const { preferences, suggestions, currentStyle } = params;
-  const fallback = createFallbackStyleAgentResponse(
+  const { preferences, suggestions, currentStyle, conversationHistory = [] } =
+    params;
+  const livePreferenceContext = buildLivePreferenceContext(
     preferences,
+    conversationHistory
+  );
+  const fallback = createFallbackStyleAgentResponse(
+    livePreferenceContext,
     suggestions,
-    currentStyle
+    currentStyle,
+    conversationHistory
   );
   const client = getClient();
 
@@ -273,8 +286,23 @@ ${suggestions
   .join("\n")}
 
 Current selected style: ${currentStyle || "none"}
-User preferences transcript:
+Recent conversation:
+${
+  conversationHistory.length > 0
+    ? conversationHistory
+        .map(
+          (turn) =>
+            `${turn.speaker === "user" ? "User" : "Agent"}: ${turn.text}`
+        )
+        .join("\n")
+    : "No prior conversation yet."
+}
+
+Newest preferences transcript:
 ${preferences || "No specific preferences given."}
+
+Cumulative preference direction:
+${livePreferenceContext || "No specific preferences given."}
 
 Respond with STRICT JSON only. Use this shape exactly:
 {
@@ -301,9 +329,10 @@ Keep the output practical for a live overlay preview. Do not include markdown or
     const text = result.response.text();
     return sanitizeAgentResponse(
       JSON.parse(text),
-      preferences,
+      livePreferenceContext,
       suggestions,
-      currentStyle
+      currentStyle,
+      conversationHistory
     );
   } catch (error) {
     console.error("Failed to generate style mashup:", error);
