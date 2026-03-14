@@ -1,5 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { FaceProfile, HairstyleSuggestion } from "./types";
+import type {
+  FaceProfile,
+  HairOverlayConfig,
+  HairstyleSuggestion,
+  StyleAgentResponse,
+} from "./types";
+import { createFallbackStyleAgentResponse } from "./styleStudio";
 
 type GeminiFaceResponse = {
   faceProfile: FaceProfile;
@@ -29,6 +35,38 @@ const DEFAULT_FACE_PROFILE: FaceProfile = {
   skinTone: "unknown",
 };
 
+const VALID_SILHOUETTES: HairOverlayConfig["silhouette"][] = [
+  "bob",
+  "curtain",
+  "shag",
+];
+const VALID_COLORS: HairOverlayConfig["colorName"][] = [
+  "soft-black",
+  "espresso",
+  "chestnut",
+  "copper",
+  "golden-blonde",
+];
+const VALID_PARTS: HairOverlayConfig["part"][] = ["center", "side"];
+const VALID_TEXTURES: HairOverlayConfig["texture"][] = [
+  "sleek",
+  "airy",
+  "piecey",
+  "wavy",
+];
+const VALID_VOLUMES: HairOverlayConfig["volume"][] = ["low", "medium", "high"];
+const VALID_FRINGES: HairOverlayConfig["fringe"][] = [
+  "none",
+  "curtain",
+  "wispy",
+  "full",
+];
+const VALID_LENGTHS: HairOverlayConfig["length"][] = [
+  "short",
+  "medium",
+  "long",
+];
+
 function getClient() {
   const apiKey = process.env.GEMINI_API_KEY;
 
@@ -40,6 +78,80 @@ function getClient() {
   }
 
   return new GoogleGenerativeAI(apiKey);
+}
+
+function isOneOf<T extends string>(value: unknown, items: readonly T[]): value is T {
+  return typeof value === "string" && items.includes(value as T);
+}
+
+function sanitizeAgentResponse(
+  candidate: unknown,
+  preferences: string,
+  suggestions: HairstyleSuggestion[],
+  currentStyle?: string | null
+): StyleAgentResponse {
+  const fallback = createFallbackStyleAgentResponse(
+    preferences,
+    suggestions,
+    currentStyle
+  );
+
+  if (!candidate || typeof candidate !== "object") {
+    return fallback;
+  }
+
+  const parsed = candidate as Record<string, unknown>;
+  const suggestionNames = suggestions.map((suggestion) => suggestion.name);
+  const selectedStyle =
+    typeof parsed.selectedStyle === "string" &&
+    suggestionNames.includes(parsed.selectedStyle)
+      ? parsed.selectedStyle
+      : fallback.selectedStyle;
+
+  const overlayCandidate =
+    parsed.overlay && typeof parsed.overlay === "object"
+      ? (parsed.overlay as Record<string, unknown>)
+      : {};
+
+  return {
+    selectedStyle,
+    mashupName:
+      typeof parsed.mashupName === "string" && parsed.mashupName.trim()
+        ? parsed.mashupName.trim()
+        : fallback.mashupName,
+    agentReply:
+      typeof parsed.agentReply === "string" && parsed.agentReply.trim()
+        ? parsed.agentReply.trim()
+        : fallback.agentReply,
+    preferencesSummary:
+      typeof parsed.preferencesSummary === "string" &&
+      parsed.preferencesSummary.trim()
+        ? parsed.preferencesSummary.trim()
+        : fallback.preferencesSummary,
+    overlay: {
+      silhouette: isOneOf(overlayCandidate.silhouette, VALID_SILHOUETTES)
+        ? overlayCandidate.silhouette
+        : fallback.overlay.silhouette,
+      colorName: isOneOf(overlayCandidate.colorName, VALID_COLORS)
+        ? overlayCandidate.colorName
+        : fallback.overlay.colorName,
+      part: isOneOf(overlayCandidate.part, VALID_PARTS)
+        ? overlayCandidate.part
+        : fallback.overlay.part,
+      texture: isOneOf(overlayCandidate.texture, VALID_TEXTURES)
+        ? overlayCandidate.texture
+        : fallback.overlay.texture,
+      volume: isOneOf(overlayCandidate.volume, VALID_VOLUMES)
+        ? overlayCandidate.volume
+        : fallback.overlay.volume,
+      fringe: isOneOf(overlayCandidate.fringe, VALID_FRINGES)
+        ? overlayCandidate.fringe
+        : fallback.overlay.fringe,
+      length: isOneOf(overlayCandidate.length, VALID_LENGTHS)
+        ? overlayCandidate.length
+        : fallback.overlay.length,
+    },
+  };
 }
 
 export async function analyzeSelfieWithGemini(
@@ -96,12 +208,12 @@ Return ONLY valid JSON. Do not include markdown, backticks, or any extra text.
     },
   };
 
-  const result = await model.generateContent([
-    {
-      role: "user",
-      parts: [{ text: prompt }, imagePart],
-    },
-  ]);
+  const requestParts =
+    imageBytes.length > 0 && mimeType.startsWith("image/")
+      ? [{ text: prompt }, imagePart]
+      : [prompt];
+
+  const result = await model.generateContent(requestParts);
 
   const text = result.response.text();
 
@@ -128,3 +240,73 @@ Return ONLY valid JSON. Do not include markdown, backticks, or any extra text.
   return parsed;
 }
 
+export async function generateStyleMashupWithGemini(params: {
+  preferences: string;
+  suggestions: HairstyleSuggestion[];
+  currentStyle?: string | null;
+}): Promise<StyleAgentResponse> {
+  const { preferences, suggestions, currentStyle } = params;
+  const fallback = createFallbackStyleAgentResponse(
+    preferences,
+    suggestions,
+    currentStyle
+  );
+  const client = getClient();
+
+  if (!client) {
+    return fallback;
+  }
+
+  const model = client.getGenerativeModel({
+    model: "gemini-1.5-flash",
+  });
+
+  const prompt = `
+You are a live celebrity hair stylist agent for a Gemini hackathon demo.
+
+The user is talking to a webcam preview and wants a hairstyle mashup recommendation.
+You must pick exactly one base style from this available list:
+${suggestions
+  .map(
+    (suggestion) => `- ${suggestion.name}: ${suggestion.reason}`
+  )
+  .join("\n")}
+
+Current selected style: ${currentStyle || "none"}
+User preferences transcript:
+${preferences || "No specific preferences given."}
+
+Respond with STRICT JSON only. Use this shape exactly:
+{
+  "selectedStyle": "one of the available style names exactly",
+  "mashupName": "short memorable demo name",
+  "agentReply": "2-3 sentence stylist response in a warm, decisive tone",
+  "preferencesSummary": "one sentence summary of what the user asked for",
+  "overlay": {
+    "silhouette": "bob" | "curtain" | "shag",
+    "colorName": "soft-black" | "espresso" | "chestnut" | "copper" | "golden-blonde",
+    "part": "center" | "side",
+    "texture": "sleek" | "airy" | "piecey" | "wavy",
+    "volume": "low" | "medium" | "high",
+    "fringe": "none" | "curtain" | "wispy" | "full",
+    "length": "short" | "medium" | "long"
+  }
+}
+
+Keep the output practical for a live overlay preview. Do not include markdown or extra text.
+`.trim();
+
+  try {
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    return sanitizeAgentResponse(
+      JSON.parse(text),
+      preferences,
+      suggestions,
+      currentStyle
+    );
+  } catch (error) {
+    console.error("Failed to generate style mashup:", error);
+    return fallback;
+  }
+}

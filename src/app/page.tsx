@@ -4,15 +4,25 @@ import { useState, useRef } from "react";
 import { Scissors, Sparkles, MapPin, ChevronRight, Menu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp";
-import type { HairstyleSuggestion } from "@/lib/types";
+import type { HairstyleSuggestion, Salon, SalonSearchResponse } from "@/lib/types";
 import SelfieUploader from "@/components/SelfieUploader";
+import SalonList from "@/components/SalonList";
+import LiveStyleStudio from "@/components/LiveStyleStudio";
+import HairstyleOverlay from "@/components/HairstyleOverlay";
+import { createOverlayFromStyle } from "@/lib/styleStudio";
 
 export default function Page() {
   const [suggestions, setSuggestions] = useState<HairstyleSuggestion[]>([]);
-  const [loading, setLoading] = useState(false);
   const [selfieUrl, setSelfieUrl] = useState<string | null>(null);
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [locationQuery, setLocationQuery] = useState("");
+  const [salons, setSalons] = useState<Salon[]>([]);
+  const [salonLoading, setSalonLoading] = useState(false);
+  const [salonError, setSalonError] = useState<string | null>(null);
+  const [hasSearchedSalons, setHasSearchedSalons] = useState(false);
 
   const resultsRef = useRef<HTMLDivElement | null>(null);
+  const salonsRef = useRef<HTMLDivElement | null>(null);
 
   const handleResults = (payload: {
     suggestions: HairstyleSuggestion[];
@@ -20,6 +30,10 @@ export default function Page() {
   }) => {
     setSuggestions(payload.suggestions || []);
     setSelfieUrl(payload.imageUrl);
+    setSelectedStyle(null);
+    setSalons([]);
+    setSalonError(null);
+    setHasSearchedSalons(false);
 
     if (resultsRef.current) {
       resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -29,6 +43,67 @@ export default function Page() {
   const handleScrollToUpload = () => {
     if (resultsRef.current) {
       resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const handleChooseStyle = (
+    styleName: string,
+    options?: { scrollToSalons?: boolean }
+  ) => {
+    setSelectedStyle(styleName);
+    setSalons([]);
+    setSalonError(null);
+    setHasSearchedSalons(false);
+
+    if (options?.scrollToSalons && salonsRef.current) {
+      salonsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const handleFindSalons = async () => {
+    if (!selectedStyle) {
+      setSalonError("Choose one of your AI hairstyles first.");
+      return;
+    }
+
+    if (!locationQuery.trim()) {
+      setSalonError("Add a city, neighborhood, or postal code to search.");
+      return;
+    }
+
+    setSalonLoading(true);
+    setSalonError(null);
+    setHasSearchedSalons(true);
+
+    try {
+      const response = await fetch(
+        `/api/salons?style=${encodeURIComponent(selectedStyle)}&location=${encodeURIComponent(
+          locationQuery.trim()
+        )}`
+      );
+
+      const data = (await response.json()) as
+        | SalonSearchResponse
+        | { error?: string };
+
+      if (!response.ok || !("salons" in data)) {
+        const message =
+          "error" in data ? data.error : "Unable to load salon matches.";
+        throw new Error(message || "Unable to load salon matches.");
+      }
+
+      setSalons(data.salons);
+    } catch (error) {
+      setSalons([]);
+      setSalonError(
+        error instanceof Error ? error.message : "Unable to load salon matches."
+      );
+    } finally {
+      setSalonLoading(false);
+
+      if (salonsRef.current) {
+        salonsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
   };
 
@@ -151,21 +226,31 @@ export default function Page() {
             <motion.section 
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-[2.5rem] border border-cyan-500/20 bg-gradient-to-b from-cyan-950/20 to-slate-900/40 p-8 md:p-12 shadow-2xl shadow-cyan-900/20"
+              className="relative overflow-hidden rounded-[3rem] border border-cyan-500/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.08),transparent_24%),linear-gradient(180deg,rgba(8,18,31,0.86),rgba(4,9,17,0.96))] p-8 shadow-2xl shadow-cyan-900/20 md:p-12"
             >
+              <div className="pointer-events-none absolute -left-16 top-12 h-60 w-60 rounded-full bg-cyan-500/8 blur-3xl" />
+              <div className="pointer-events-none absolute bottom-0 right-0 h-72 w-72 rounded-full bg-fuchsia-500/8 blur-3xl" />
+              <div className="relative">
               <div className="mb-10 flex flex-col items-start gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
                   <h2 className="text-3xl font-medium tracking-tight text-white mb-2">
-                    Your Curated Looks
+                    Your Live Stylist Session
                   </h2>
-                  <p className="text-slate-400 max-w-lg">
-                    Based on your facial structure analysis, our AI recommends these precise cuts. Show these directly to your stylist.
+                  <p className="max-w-2xl text-slate-400">
+                    Start with the live mashup studio, talk your preferences into the agent, then move into the saved looks and salon handoff. Everything stays in one polished flow instead of jumping between tools.
                   </p>
                 </div>
                 <button className="text-sm font-medium text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
-                  View full analysis <ChevronRight className="h-4 w-4" />
+                  Open stylist brief <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
+
+              <LiveStyleStudio
+                suggestions={suggestions}
+                selfieUrl={selfieUrl}
+                selectedStyle={selectedStyle}
+                onSelectStyle={(styleName) => handleChooseStyle(styleName)}
+              />
 
               <div className="grid gap-6 md:grid-cols-3">
                 {suggestions.map((style, i) => (
@@ -174,48 +259,77 @@ export default function Page() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: i * 0.1 }}
                     key={style.name}
-                    className="group overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50 hover:bg-slate-900/80 transition-colors"
+                    className={`group overflow-hidden rounded-2xl border bg-slate-950/50 transition-colors ${
+                      selectedStyle === style.name
+                        ? "border-cyan-400/60 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]"
+                        : "border-white/10 hover:bg-slate-900/80"
+                    }`}
                   >
                     <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-800">
                       {selfieUrl ? (
                         <>
-                          <img
-                            src={selfieUrl}
-                            alt="Your selfie with hairstyle overlay"
-                            className="h-full w-full object-cover opacity-90"
+                          <div
+                            aria-label="Your selfie with hairstyle overlay"
+                            className="h-full w-full bg-cover bg-center opacity-90"
+                            style={{ backgroundImage: `url(${selfieUrl})` }}
                           />
-                          {/* Simple overlay: map style name to a hairstyle sticker */}
-                          <img
-                            src={
-                              style.name.toLowerCase().includes("bob")
-                                ? "/hairstyles/bob.png"
-                                : style.name.toLowerCase().includes("fringe")
-                                  ? "/hairstyles/fringe.png"
-                                  : style.name.toLowerCase().includes("shag")
-                                    ? "/hairstyles/shag.png"
-                                    : "/hairstyles/default.png"
-                            }
-                            alt={style.name}
-                            className="pointer-events-none absolute left-1/2 top-[18%] w-[70%] -translate-x-1/2"
+                          <HairstyleOverlay
+                            compact
+                            config={createOverlayFromStyle(style.name)}
                           />
                         </>
                       ) : (
-                        <img
-                          src={`https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80`}
-                          alt={style.name}
-                          className="h-full w-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-100"
+                        <div
+                          aria-label={style.name}
+                          className="h-full w-full bg-cover bg-center opacity-80 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-100"
+                          style={{
+                            backgroundImage:
+                              "url(https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80)",
+                          }}
                         />
                       )}
                     </div>
                     <div className="p-6">
-                      <h3 className="text-lg font-medium text-white mb-2">{style.name}</h3>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-medium text-white">{style.name}</h3>
+                        {selectedStyle === style.name && (
+                          <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-200">
+                            Selected
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-slate-400 line-clamp-3 leading-relaxed">{style.reason}</p>
-                      <button className="mt-6 w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-sm font-medium text-white transition-colors">
-                        Book this style
+                      <button
+                        onClick={() =>
+                          handleChooseStyle(style.name, { scrollToSalons: true })
+                        }
+                        className={`mt-6 w-full rounded-xl py-2.5 text-sm font-medium transition-colors ${
+                          selectedStyle === style.name
+                            ? "bg-cyan-500 text-slate-950 hover:bg-cyan-400"
+                            : "bg-white/5 text-white hover:bg-white/10"
+                        }`}
+                      >
+                        {selectedStyle === style.name
+                          ? "Style selected"
+                          : "Use this look"}
                       </button>
                     </div>
                   </motion.article>
                 ))}
+              </div>
+
+              <div ref={salonsRef}>
+                <SalonList
+                  selectedStyle={selectedStyle}
+                  location={locationQuery}
+                  onLocationChange={setLocationQuery}
+                  onSearch={handleFindSalons}
+                  loading={salonLoading}
+                  error={salonError}
+                  salons={salons}
+                  hasSearched={hasSearchedSalons}
+                />
+              </div>
               </div>
             </motion.section>
           )}
@@ -229,4 +343,3 @@ export default function Page() {
     </div>
   );
 }
-
