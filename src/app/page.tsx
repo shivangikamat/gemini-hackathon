@@ -1,26 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Scissors, Sparkles, MapPin, ChevronRight, Menu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp";
 import type { HairstyleSuggestion } from "@/lib/types";
+import SelfieUploader from "@/components/SelfieUploader";
 
 export default function Page() {
   const [suggestions, setSuggestions] = useState<HairstyleSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selfieUrl, setSelfieUrl] = useState<string | null>(null);
 
-  const handleAnalyze = async () => {
-    setLoading(true);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
 
-    const res = await fetch("/api/analyze-selfie", {
-      method: "POST",
-    });
+  const handleResults = (payload: {
+    suggestions: HairstyleSuggestion[];
+    imageUrl: string;
+  }) => {
+    setSuggestions(payload.suggestions || []);
+    setSelfieUrl(payload.imageUrl);
 
-    const data = await res.json();
-    setSuggestions(data.suggestions || []);
+    if (resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
-    setLoading(false);
+  const handleScrollToUpload = () => {
+    if (resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   return (
@@ -52,7 +61,7 @@ export default function Page() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.8, ease: "easeInOut" }}
-          className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-cyan-300 mb-8"
+          className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-cyan-300 -mt-8 mb-8"
         >
           <Sparkles className="h-3.5 w-3.5" />
           <span>Premium AI Salon</span>
@@ -84,20 +93,12 @@ export default function Page() {
           className="mt-10 flex flex-col sm:flex-row gap-4 items-center"
         >
           <button
-            onClick={handleAnalyze}
-            disabled={loading}
+            onClick={handleScrollToUpload}
             className="group relative inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-full bg-cyan-500 px-8 text-sm font-medium text-slate-950 transition-all hover:bg-cyan-400 hover:shadow-[0_0_40px_rgba(34,211,238,0.4)] disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-r-transparent"></div>
-                Analyzing profile...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                Analyze Face <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </span>
-            )}
+            <span className="flex items-center gap-2">
+              Analyze Face <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </span>
           </button>
           <button className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-slate-700 px-8 text-sm font-medium text-slate-300 transition-all hover:border-slate-500 hover:bg-slate-800/50 hover:text-white">
             Explore Lookbook
@@ -107,7 +108,12 @@ export default function Page() {
 
       {/* Content Section */}
       <main className="relative z-10 mx-auto max-w-7xl px-6 py-24 md:px-12 lg:px-24 border-t border-white/5 bg-slate-950">
-        
+
+        {/* Selfie upload + analysis panel – pulled slightly closer to the hero */}
+        <div className="mb-16 -mt-8" ref={resultsRef}>
+          <SelfieUploader onResults={handleResults} />
+        </div>
+
         <div className="mb-20 grid gap-8 md:grid-cols-3">
           <div className="group rounded-3xl border border-white/5 bg-white/[0.02] p-8 transition-colors hover:bg-white/[0.04]">
             <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 ring-1 ring-cyan-500/20 transition-transform group-hover:scale-110">
@@ -170,12 +176,36 @@ export default function Page() {
                     key={style.name}
                     className="group overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50 hover:bg-slate-900/80 transition-colors"
                   >
-                    <div className="aspect-[4/5] w-full overflow-hidden bg-slate-800">
-                      <img 
-                        src={`https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80`} 
-                        alt={style.name}
-                        className="h-full w-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-100"
-                      />
+                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-800">
+                      {selfieUrl ? (
+                        <>
+                          <img
+                            src={selfieUrl}
+                            alt="Your selfie with hairstyle overlay"
+                            className="h-full w-full object-cover opacity-90"
+                          />
+                          {/* Simple overlay: map style name to a hairstyle sticker */}
+                          <img
+                            src={
+                              style.name.toLowerCase().includes("bob")
+                                ? "/hairstyles/bob.png"
+                                : style.name.toLowerCase().includes("fringe")
+                                  ? "/hairstyles/fringe.png"
+                                  : style.name.toLowerCase().includes("shag")
+                                    ? "/hairstyles/shag.png"
+                                    : "/hairstyles/default.png"
+                            }
+                            alt={style.name}
+                            className="pointer-events-none absolute left-1/2 top-[18%] w-[70%] -translate-x-1/2"
+                          />
+                        </>
+                      ) : (
+                        <img
+                          src={`https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80`}
+                          alt={style.name}
+                          className="h-full w-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105 group-hover:opacity-100"
+                        />
+                      )}
                     </div>
                     <div className="p-6">
                       <h3 className="text-lg font-medium text-white mb-2">{style.name}</h3>

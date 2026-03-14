@@ -18,6 +18,18 @@ export const LampContainer = ({
       )}
     >
       <div className="relative flex w-full flex-1 scale-y-125 items-center justify-center isolate z-0 ">
+        {/* Tube light above the glow */}
+        <motion.div
+          initial={{ opacity: 0, width: "12rem" }}
+          whileInView={{ opacity: 1, width: "22rem" }}
+          transition={{
+            delay: 0.2,
+            duration: 0.8,
+            ease: "easeInOut",
+          }}
+          className="absolute top-[32%] z-40 h-0.5 rounded-full bg-gradient-to-r from-cyan-300 via-cyan-500 to-cyan-300 shadow-[0_0_35px_rgba(34,211,238,0.9)]"
+        />
+
         <motion.div
           initial={{ opacity: 0.5, width: "15rem" }}
           whileInView={{ opacity: 1, width: "30rem" }}
@@ -77,7 +89,8 @@ export const LampContainer = ({
         <div className="absolute inset-auto z-40 h-44 w-full -translate-y-[12.5rem] bg-slate-950 "></div>
       </div>
 
-      <div className="relative z-50 flex -translate-y-80 flex-col items-center px-5">
+      {/* Move the hero text even further down while keeping the tube in place */}
+      <div className="relative z-50 flex -translate-y-32 flex-col items-center px-5">
         {children}
       </div>
     </div>
