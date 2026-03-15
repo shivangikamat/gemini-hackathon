@@ -574,7 +574,7 @@ export default function PremiumSalonStudio({
   const [sessionTurns, setSessionTurns] = useState<StyleAgentTurn[]>([
     { speaker: "agent", text: INITIAL_AGENT_REPLY },
   ]);
-  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerCategory, setDrawerCategory] = useState<DrawerCategory>("all");
   const [mirrorView, setMirrorView] = useState<MirrorViewMode>("live");
   const [voiceProvider, setVoiceProvider] = useState<VoiceProvider>("browser");
@@ -671,7 +671,7 @@ export default function PremiumSalonStudio({
 
   const stylistNoticing = useMemo(() => {
     const notes = [
-      `${preset.shortLabel} is reading strongest when the perimeter stays ${preset.partDefault === "side" ? "slightly off-centre" : "balanced"} and the crown stays polished.`,
+      `${preset.shortLabel} is reading strongest when the perimeter stays ${preset.defaultPart === "side" ? "slightly off-centre" : "balanced"} and the crown stays polished.`,
       `${selectedColorLabel} adds the richer salon finish you asked for, with more depth through the mid-lengths.`,
       clientMemorySummary
         ? `I’m carrying forward this memory from your last session: ${clientMemorySummary}.`
@@ -1898,7 +1898,7 @@ export default function PremiumSalonStudio({
 
   const renderOverlayModeControls =
     renderLook && (
-      <div className="absolute right-4 top-4 z-20 flex gap-2 rounded-full border border-white/12 bg-[#2f1f34]/82 p-1 backdrop-blur">
+      <div className="absolute right-4 top-4 z-20 flex gap-2 rounded-full border border-white/30 bg-[#43244c]/82 p-1 backdrop-blur">
         {([
           { id: "live", label: "Live" },
           { id: "compare", label: "Compare" },
@@ -1912,7 +1912,7 @@ export default function PremiumSalonStudio({
               "rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors",
               mirrorView === option.id
                 ? "bg-[#f4b680] text-[#24131d]"
-                : "text-[#e7dcd9] hover:text-white"
+                : "text-[#f9e8e1] hover:text-white"
             )}
           >
             {option.label}
@@ -1922,31 +1922,42 @@ export default function PremiumSalonStudio({
     );
 
   return (
-    <section className="min-h-screen bg-[radial-gradient(circle_at_top,#123554_0%,#08111d_38%,#04070d_100%)] px-4 py-4 text-white md:px-8 md:py-6">
+    <section className="min-h-screen bg-[linear-gradient(180deg,#5b315f_0%,#7a4d72_12%,#ebb6a8_12.2%,#ebb6a8_86%,#7a5b91_100%)] px-4 py-4 text-slate-950 md:px-8 md:py-6">
       <div className="mx-auto max-w-[1600px]">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={returnToLobby}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm font-medium text-white transition-colors hover:border-cyan-400/35 hover:text-cyan-200"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to salon lobby
-          </button>
+        <div className="sticky top-4 z-40 mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[2rem] border border-white/40 bg-[#2e1737]/92 px-4 py-3 text-white shadow-[0_24px_70px_rgba(46,23,55,0.28)] backdrop-blur">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={returnToLobby}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-medium text-white transition-colors hover:bg-white/[0.16]"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to salon lobby
+            </button>
+            <div className="hidden h-11 w-px bg-white/12 md:block" />
+            <div className="hidden md:block">
+              <div className="text-lg font-semibold tracking-tight">
+                HairMatch Mirror Suite
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.24em] text-white/60">
+                Lobby mood, live styling
+              </div>
+            </div>
+          </div>
 
           <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-200">
-              Personal Mirror Suite
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#ffd6cd]">
+              Personal mirror suite
             </span>
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80">
               {cameraActive ? "Webcam live" : "Camera optional"}
             </span>
             <span
               className={cn(
                 "rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]",
                 premiumPortraitReady
-                  ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
-                  : "border-amber-400/20 bg-amber-400/10 text-amber-100"
+                  ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-50"
+                  : "border-[#f4b680]/35 bg-[#f4b680]/12 text-[#fff2ea]"
               )}
             >
               {premiumPortraitReady ? "Portrait ready" : "Portrait required"}
@@ -1954,51 +1965,54 @@ export default function PremiumSalonStudio({
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.33fr_0.67fr]">
-          <div className="relative min-h-[780px] overflow-hidden rounded-[2.8rem] border border-white/10 bg-[linear-gradient(180deg,rgba(88,47,98,0.22),rgba(7,16,28,0.9))] p-4 shadow-[0_40px_120px_rgba(0,0,0,0.45)]">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(circle_at_top,rgba(127,211,255,0.18),transparent_64%)]" />
-            <div className="relative mb-4 flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Private stylist session
-                </div>
-                <h2 className="mt-3 text-3xl font-medium tracking-tight text-white">
-                  Sit at the mirror and try looks in one place.
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
-                  The webcam stays live in the mirror, the portrait dock keeps premium renders unlocked, and the salon drawer holds presets, color melts, and refinements without leaving the room.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={cameraActive ? stopCamera : startCamera}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm font-medium text-white transition-colors hover:border-cyan-400/30 hover:text-cyan-200"
-                >
-                  {cameraActive ? <Camera className="h-4 w-4" /> : <Video className="h-4 w-4" />}
-                  {cameraActive ? "Pause webcam" : "Use webcam"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => portraitInputRef.current?.click()}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm font-medium text-white transition-colors hover:border-cyan-400/30 hover:text-cyan-200"
-                >
-                  <Upload className="h-4 w-4" />
-                  Add portrait
-                </button>
-              </div>
-            </div>
+        <div className="grid gap-6 xl:grid-cols-[1.28fr_0.72fr]">
+          <div className="space-y-6">
+            <div className="relative overflow-hidden rounded-[2.8rem] border border-white/35 bg-[linear-gradient(180deg,rgba(103,55,105,0.92),rgba(53,25,66,0.96))] p-4 text-white shadow-[0_40px_120px_rgba(70,31,69,0.28)]">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,rgba(255,220,209,0.24),transparent_66%)]" />
+              <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:42px_26px]" />
 
-            <div className="relative min-h-[640px] overflow-hidden rounded-[2.4rem] border border-[#d8c08f]/25 bg-[linear-gradient(180deg,rgba(58,34,75,0.46),rgba(5,11,21,0.85))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-              <div className="absolute inset-0 rounded-[2rem] border border-white/5" />
-              <div className="absolute inset-4 overflow-hidden rounded-[2rem] border border-[#d8c08f]/35 bg-[radial-gradient(circle_at_top,rgba(87,156,189,0.18),rgba(9,18,30,0.94)_38%,rgba(4,8,16,1)_100%)] shadow-[0_30px_90px_rgba(0,0,0,0.46)]">
+              <div className="relative mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ffd6cd]">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Private stylist session
+                  </div>
+                  <h2 className="mt-3 text-3xl font-medium tracking-tight text-white">
+                    Sit at the mirror and tune the look live.
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/75">
+                    The webcam stays clear, the stylist stays in focus, and the style deck lives below the mirror instead of covering it.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={cameraActive ? stopCamera : startCamera}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-medium text-white transition-colors hover:bg-white/[0.16]"
+                  >
+                    {cameraActive ? <Camera className="h-4 w-4" /> : <Video className="h-4 w-4" />}
+                    {cameraActive ? "Pause webcam" : "Use webcam"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => portraitInputRef.current?.click()}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#f4b680] px-4 text-sm font-semibold text-[#24131d] transition-colors hover:bg-[#ffc896]"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Add portrait
+                  </button>
+                </div>
+              </div>
+
+              <div className="relative min-h-[640px] overflow-hidden rounded-[2.4rem] border border-white/20 bg-[linear-gradient(180deg,rgba(100,53,102,0.5),rgba(20,8,28,0.92))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+                <div className="absolute inset-0 rounded-[2rem] border border-white/10" />
+                <div className="absolute inset-4 overflow-hidden rounded-[2rem] border border-[#ffd8cb]/25 bg-[radial-gradient(circle_at_top,rgba(255,205,188,0.16),rgba(44,18,54,0.92)_40%,rgba(17,8,24,1)_100%)] shadow-[0_30px_90px_rgba(0,0,0,0.32)]">
                 <div className="absolute inset-x-0 top-0 h-28 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0))]" />
                 <div className="pointer-events-none absolute inset-0 opacity-80">
                   <motion.div
                     animate={{ x: ["-18%", "118%"] }}
                     transition={{ duration: 4.8, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-y-0 w-24 bg-[linear-gradient(90deg,transparent,rgba(219,247,255,0.18),transparent)] blur-xl"
+                    className="absolute inset-y-0 w-24 bg-[linear-gradient(90deg,transparent,rgba(255,231,225,0.18),transparent)] blur-xl"
                   />
                 </div>
 
@@ -2042,12 +2056,12 @@ export default function PremiumSalonStudio({
                     <>
                       <div
                         style={faceGuideStyle}
-                        className="pointer-events-none absolute rounded-[42%] border border-emerald-300/45 bg-emerald-300/[0.04]"
+                        className="pointer-events-none absolute rounded-[42%] border border-[#ffd8cb]/45 bg-[#ffd8cb]/[0.04]"
                       />
                       {crownGuideStyle && (
                         <div
                           style={crownGuideStyle}
-                          className="pointer-events-none absolute border-t border-dashed border-cyan-300/60"
+                          className="pointer-events-none absolute border-t border-dashed border-[#f4b680]/60"
                         />
                       )}
                     </>
@@ -2078,8 +2092,8 @@ export default function PremiumSalonStudio({
                           sizes="(max-width: 1280px) 100vw, 35vw"
                           className="object-cover"
                         />
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/96 to-transparent p-4">
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/96 to-transparent p-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ffd6cd]">
                             Gemini render
                           </div>
                           <div className="mt-1 text-sm font-medium text-white">
@@ -2092,13 +2106,13 @@ export default function PremiumSalonStudio({
                 </div>
 
                 <div className="absolute left-4 top-4 z-20 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-white/10 bg-slate-950/72 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200 backdrop-blur">
+                  <span className="rounded-full border border-white/15 bg-[#2f1738]/78 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ffd6cd] backdrop-blur">
                     {cameraActive ? "Webcam live" : activePortraitUrl ? "Portrait mode" : "Mirror idle"}
                   </span>
-                  <span className="rounded-full border border-white/10 bg-slate-950/72 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
+                  <span className="rounded-full border border-white/15 bg-[#2f1738]/78 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
                     {preset.label}
                   </span>
-                  <span className="rounded-full border border-white/10 bg-slate-950/72 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200 backdrop-blur">
+                  <span className="rounded-full border border-white/15 bg-[#2f1738]/78 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-100 backdrop-blur">
                     {trackingReady
                       ? faceLockActive
                         ? "Tracking locked"
@@ -2111,144 +2125,313 @@ export default function PremiumSalonStudio({
 
                 {renderOverlayModeControls}
 
-                <div className="absolute left-4 bottom-24 z-20 max-w-sm rounded-[1.6rem] border border-white/10 bg-slate-950/75 px-4 py-3 backdrop-blur">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-200">
+                <div className="absolute left-4 bottom-6 z-20 max-w-sm rounded-[1.6rem] border border-white/15 bg-[#2f1738]/76 px-4 py-3 backdrop-blur">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#ffd6cd]">
                     Current salon edit
                   </div>
                   <div className="mt-2 text-2xl font-medium text-white">
                     {mashupName}
                   </div>
-                  <div className="mt-2 text-sm leading-relaxed text-slate-300">
+                  <div className="mt-2 text-sm leading-relaxed text-white/75">
                     {agentSummary}
                   </div>
                 </div>
 
-                <div className="absolute right-4 bottom-24 z-20 rounded-full border border-white/10 bg-slate-950/72 px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-200 backdrop-blur">
+                <div className="absolute right-4 bottom-6 z-20 rounded-full border border-white/15 bg-[#2f1738]/76 px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-white/80 backdrop-blur">
                   {anchorDiagnostics.label} • {Math.round(anchorDiagnostics.score * 100)}%
                 </div>
               </div>
 
               <div className="pointer-events-none absolute inset-x-8 bottom-4 z-10 h-6 rounded-full bg-black/45 blur-xl" />
+            </div>
 
-              <div className="absolute right-8 top-8 z-30 w-[220px] rounded-[1.7rem] border border-white/12 bg-slate-950/78 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.32)] backdrop-blur">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-200">
-                      Portrait dock
-                    </div>
-                    <div className="mt-1 text-sm text-white">
-                      Premium renders need your portrait.
-                    </div>
+            {(cameraError || trackingError) && (
+              <div className="rounded-[1.5rem] border border-[#8e597d]/20 bg-[#5e305f]/12 px-4 py-3 text-sm text-white/90">
+                {cameraError || trackingError}
+              </div>
+            )}
+            <div className="rounded-[2.3rem] border border-white/35 bg-[linear-gradient(180deg,rgba(92,49,95,0.92),rgba(59,31,70,0.96))] p-5 text-white shadow-[0_28px_90px_rgba(67,32,73,0.24)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ffd6cd]">
+                    Style deck
                   </div>
-                  {portraitPreviewUrl ? (
-                    <button
-                      type="button"
-                      onClick={() => void removePortrait()}
-                      className="rounded-full border border-white/10 p-2 text-slate-300 transition-colors hover:border-rose-400/30 hover:text-rose-200"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  ) : null}
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/70">
+                    Browse presets, shift the color melt, and refine the finish without covering the mirror.
+                  </p>
                 </div>
-
-                <input
-                  ref={portraitInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(event) => {
-                    void handlePortraitSelection(event.target.files?.[0] || null);
-                  }}
-                  className="hidden"
-                />
-
-                <div className="mt-4 overflow-hidden rounded-[1.4rem] border border-white/10 bg-white/[0.04]">
-                  {portraitPreviewUrl ? (
-                    <div className="relative aspect-[4/5]">
-                      <Image
-                        src={portraitPreviewUrl}
-                        alt="Portrait dock"
-                        fill
-                        unoptimized
-                        sizes="220px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex aspect-[4/5] items-center justify-center px-4 text-center text-sm text-slate-400">
-                      Upload once and keep the same portrait on across visits.
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4 grid gap-2">
-                  <button
-                    type="button"
-                    onClick={() => portraitInputRef.current?.click()}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm font-medium text-white transition-colors hover:border-cyan-400/30 hover:text-cyan-200"
-                  >
-                    <Upload className="h-3.5 w-3.5" />
-                    {portraitSaving ? "Saving portrait..." : portraitPreviewUrl ? "Change portrait" : "Upload portrait"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handlePortraitAnalyze()}
-                    disabled={!portraitPreviewUrl || portraitBusy}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-cyan-300 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {portraitBusy ? "Analyzing..." : "Analyze portrait"}
-                  </button>
-                </div>
-
-                <div className="mt-3 text-xs leading-relaxed text-slate-400">
-                  {portraitPreviewUrl
-                    ? "Portrait is pinned and will keep the Gemini finish consistent."
-                    : "You can still chat and preview live without it, but premium renders stay locked until a portrait is added."}
-                </div>
-
-                {portraitError && (
-                  <div className="mt-3 rounded-[1.2rem] border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
-                    {portraitError}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen((current) => !current)}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 text-sm font-medium text-white transition-colors hover:bg-white/[0.16]"
+                >
+                  {drawerOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                  {drawerOpen ? "Hide style deck" : "Open style deck"}
+                </button>
               </div>
 
-              <div className="absolute inset-x-4 bottom-4 z-30">
-                <div className="flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setDrawerOpen((current) => !current)}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-slate-950/84 px-5 text-sm font-medium text-white backdrop-blur transition-colors hover:border-cyan-400/30 hover:text-cyan-200"
+              <AnimatePresence initial={false}>
+                {drawerOpen && (
+                  <motion.div
+                    initial={{ y: 24, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 24, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                    className="mt-5 space-y-4"
                   >
-                    {drawerOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-                    Salon drawer
-                  </button>
-                </div>
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_GROUPS.map((group) => (
+                        <button
+                          key={group.id}
+                          type="button"
+                          onClick={() => setDrawerCategory(group.id)}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors",
+                            drawerCategory === group.id
+                              ? "border-[#f4b680]/45 bg-[#f4b680]/15 text-[#fff2ea]"
+                              : "border-white/15 text-white/70 hover:bg-white/10 hover:text-white"
+                          )}
+                        >
+                          {group.label}
+                        </button>
+                      ))}
+                    </div>
 
-                <AnimatePresence initial={false}>
-                  {drawerOpen && (
-                    <motion.div
-                      initial={{ y: 80, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: 80, opacity: 0 }}
-                      transition={{ type: "spring", stiffness: 240, damping: 24 }}
-                      className="mt-3 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/90 p-4 shadow-[0_24px_90px_rgba(0,0,0,0.48)] backdrop-blur"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="grid gap-4 xl:grid-cols-[1.06fr_0.94fr]">
+                      <div className="space-y-4">
                         <div>
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                            Salon drawer
+                          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/45">
+                            Stylist picks
                           </div>
-                          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-400">
-                            Explore grouped cuts, shift the color melt, and fine-tune the feel while the mirror stays live.
-                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {alternateRecommendations.slice(0, 3).map((suggestion) => {
+                              const suggestionPresetId =
+                                suggestion.presetId || inferPresetIdFromStyleName(suggestion.name);
+
+                              return (
+                                <button
+                                  key={`drawer-pick-${suggestionPresetId}`}
+                                  type="button"
+                                  onClick={() => handlePresetSelect(suggestion.name)}
+                                  className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/[0.16]"
+                                >
+                                  {suggestion.name}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2 xl:max-h-[340px] xl:overflow-y-auto xl:pr-1">
+                          {filteredDrawerSuggestions.map((suggestion) => {
+                            const suggestionPresetId =
+                              suggestion.presetId || inferPresetIdFromStyleName(suggestion.name);
+                            const suggestionPreset = getHeroPreset(suggestionPresetId);
+                            const active = suggestionPresetId === presetId;
+
+                            return (
+                              <button
+                                key={`${drawerCategory}-${suggestionPresetId}`}
+                                type="button"
+                                onClick={() => handlePresetSelect(suggestion.name)}
+                                className={cn(
+                                  "rounded-[1.6rem] border px-4 py-4 text-left transition-colors",
+                                  active
+                                    ? "border-[#f4b680]/45 bg-[#f4b680]/12 text-white"
+                                    : "border-white/15 bg-white/[0.08] text-white/90 hover:bg-white/12"
+                                )}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="text-sm font-medium">
+                                    {suggestionPreset.label}
+                                  </div>
+                                  {suggestionPresetId === clientProfile.lastPresetId ? (
+                                    <span className="rounded-full border border-white/20 bg-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-[#ffd6cd]">
+                                      remembered
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <div className="mt-2 text-xs leading-relaxed text-white/65">
+                                  {suggestion.reason}
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-1.5">
+                                  {suggestionPreset.vibes.slice(0, 2).map((vibe) => (
+                                    <span
+                                      key={`${suggestionPresetId}-${vibe}`}
+                                      className="rounded-full border border-white/15 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-white/55"
+                                    >
+                                      {vibe}
+                                    </span>
+                                  ))}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/45">
+                            Color melt
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-5 xl:grid-cols-1">
+                            {HAIR_COLOR_OPTIONS.map((color) => {
+                              const palette = getOverlayPalette(color.id);
+                              const active = tuning.colorDirection === color.id;
+
+                              return (
+                                <button
+                                  key={`drawer-color-${color.id}`}
+                                  type="button"
+                                  onClick={() => handleColorSelect(color.id)}
+                                  className={cn(
+                                    "rounded-[1.2rem] border px-3 py-3 text-left transition-colors",
+                                    active
+                                      ? "border-[#f4b680]/45 bg-[#f4b680]/12"
+                                      : "border-white/15 bg-white/[0.08] hover:bg-white/12"
+                                  )}
+                                >
+                                  <div
+                                    className="h-10 rounded-[0.9rem]"
+                                    style={{
+                                      background: `linear-gradient(135deg, ${palette.shine}, ${palette.mid} 48%, ${palette.base} 100%)`,
+                                    }}
+                                  />
+                                  <div className="mt-2 text-xs font-medium text-white">
+                                    {getColorLabel(color.id)}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="rounded-[1.6rem] border border-white/15 bg-white/[0.08] p-4">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/45">
+                            Custom finish
+                          </div>
+                          <div className="mt-3 grid gap-4">
+                            <div>
+                              <div className="mb-2 text-xs font-medium text-white">
+                                Part
+                              </div>
+                              <div className="flex gap-2">
+                                {(["center", "side"] as const).map((part) => (
+                                  <button
+                                    key={part}
+                                    type="button"
+                                    onClick={() => {
+                                      setTuning((current) =>
+                                        normalizePresetTuning(presetId, {
+                                          ...current,
+                                          part,
+                                        })
+                                      );
+                                    }}
+                                    className={cn(
+                                      "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                                      tuning.part === part
+                                        ? "border-[#f4b680]/45 bg-[#f4b680]/15 text-[#fff2ea]"
+                                        : "border-white/15 text-white/70 hover:bg-white/10 hover:text-white"
+                                    )}
+                                  >
+                                    {part}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {([
+                              {
+                                key: "softness",
+                                label: "Softness",
+                                min: -0.3,
+                                max: 1,
+                                step: 0.05,
+                              },
+                              {
+                                key: "crownVolume",
+                                label: "Crown volume",
+                                min: -0.3,
+                                max: 1,
+                                step: 0.05,
+                              },
+                              {
+                                key: "waveBoost",
+                                label: "Movement",
+                                min: -0.2,
+                                max: 1,
+                                step: 0.05,
+                              },
+                            ] as Array<{
+                              key: keyof Pick<
+                                PresetTuning,
+                                "softness" | "crownVolume" | "waveBoost"
+                              >;
+                              label: string;
+                              min: number;
+                              max: number;
+                              step: number;
+                            }>).map((control) => (
+                              <label key={control.key}>
+                                <div className="flex items-center justify-between gap-3 text-xs text-white/65">
+                                  <span>{control.label}</span>
+                                  <span>{tuning[control.key].toFixed(2)}</span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min={control.min}
+                                  max={control.max}
+                                  step={control.step}
+                                  value={tuning[control.key]}
+                                  onChange={(event) => {
+                                    const nextValue = Number(event.target.value);
+                                    setTuning((current) =>
+                                      normalizePresetTuning(presetId, {
+                                        ...current,
+                                        [control.key]: nextValue,
+                                      })
+                                    );
+                                  }}
+                                  className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/15 accent-[#f4b680]"
+                                />
+                              </label>
+                            ))}
+
+                            <div>
+                              <div className="mb-2 text-xs font-medium text-white">
+                                Makeover level
+                              </div>
+                              <div className="grid gap-2 sm:grid-cols-3">
+                                {(["subtle", "signature", "editorial"] as MakeoverLevel[]).map(
+                                  (level) => (
+                                    <button
+                                      key={level}
+                                      type="button"
+                                      onClick={() => setMakeoverLevel(level)}
+                                      className={cn(
+                                        "rounded-[1.2rem] border px-3 py-2 text-left text-xs transition-colors",
+                                        makeoverLevel === level
+                                          ? "border-[#f4b680]/45 bg-[#f4b680]/15 text-[#fff2ea]"
+                                          : "border-white/15 text-white/70 hover:bg-white/10 hover:text-white"
+                                      )}
+                                    >
+                                      <div className="font-medium capitalize">{level}</div>
+                                    </button>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                         <div className="flex flex-wrap gap-2">
                           <button
                             type="button"
                             onClick={() => void handleRenderLook("manual")}
                             disabled={renderLookLoading || !premiumPortraitReady}
-                            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-cyan-300 px-4 text-xs font-semibold text-slate-950 transition-colors hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#f4b680] px-4 text-xs font-semibold text-[#24131d] transition-colors hover:bg-[#ffc896] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             <Sparkles className="h-3.5 w-3.5" />
                             {renderLookLoading ? "Rendering..." : "Render on portrait"}
@@ -2257,719 +2440,554 @@ export default function PremiumSalonStudio({
                             type="button"
                             onClick={handleAgentSubmit}
                             disabled={agentLoading}
-                            className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/10 px-4 text-xs font-medium text-white transition-colors hover:border-cyan-400/30 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-xs font-medium text-white transition-colors hover:bg-white/[0.16] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             <Wand2 className="h-3.5 w-3.5" />
                             {agentLoading ? "Stylist thinking..." : "Ask stylist"}
                           </button>
                         </div>
                       </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+          </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {PRESET_GROUPS.map((group) => (
-                          <button
-                            key={group.id}
-                            type="button"
-                            onClick={() => setDrawerCategory(group.id)}
-                            className={cn(
-                              "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors",
-                              drawerCategory === group.id
-                                ? "border-fuchsia-400/35 bg-fuchsia-400/10 text-fuchsia-100"
-                                : "border-white/10 text-slate-300 hover:border-white/20 hover:text-white"
-                            )}
-                          >
-                            {group.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="mt-4 grid gap-3 xl:grid-cols-[1.06fr_0.94fr]">
-                        <div className="space-y-4">
-                          <div>
-                            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                              Stylist picks
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {alternateRecommendations.slice(0, 3).map((suggestion) => {
-                                const suggestionPresetId =
-                                  suggestion.presetId || inferPresetIdFromStyleName(suggestion.name);
-
-                                return (
-                                  <button
-                                    key={`drawer-pick-${suggestionPresetId}`}
-                                    type="button"
-                                    onClick={() => handlePresetSelect(suggestion.name)}
-                                    className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-medium text-cyan-100 transition-colors hover:border-cyan-300/35 hover:bg-cyan-400/14"
-                                  >
-                                    {suggestion.name}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          <div className="grid gap-3 sm:grid-cols-2 xl:max-h-[320px] xl:overflow-y-auto xl:pr-1">
-                            {filteredDrawerSuggestions.map((suggestion) => {
-                              const suggestionPresetId =
-                                suggestion.presetId || inferPresetIdFromStyleName(suggestion.name);
-                              const suggestionPreset = getHeroPreset(suggestionPresetId);
-                              const active = suggestionPresetId === presetId;
-
-                              return (
-                                <button
-                                  key={`${drawerCategory}-${suggestionPresetId}`}
-                                  type="button"
-                                  onClick={() => handlePresetSelect(suggestion.name)}
-                                  className={cn(
-                                    "rounded-[1.6rem] border px-4 py-4 text-left transition-colors",
-                                    active
-                                      ? "border-cyan-400/35 bg-cyan-400/10 text-white"
-                                      : "border-white/10 bg-white/[0.03] text-slate-200 hover:border-white/20 hover:bg-white/[0.05]"
-                                  )}
-                                >
-                                  <div className="flex items-center justify-between gap-3">
-                                    <div className="text-sm font-medium">
-                                      {suggestionPreset.label}
-                                    </div>
-                                    {suggestionPresetId === clientProfile.lastPresetId ? (
-                                      <span className="rounded-full border border-fuchsia-400/25 bg-fuchsia-400/10 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-fuchsia-100">
-                                        remembered
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                  <div className="mt-2 text-xs leading-relaxed text-slate-400">
-                                    {suggestion.reason}
-                                  </div>
-                                  <div className="mt-3 flex flex-wrap gap-1.5">
-                                    {suggestionPreset.vibes.slice(0, 2).map((vibe) => (
-                                      <span
-                                        key={`${suggestionPresetId}-${vibe}`}
-                                        className="rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-400"
-                                      >
-                                        {vibe}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div>
-                            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                              Color melt
-                            </div>
-                            <div className="grid gap-2 sm:grid-cols-5 xl:grid-cols-1">
-                              {HAIR_COLOR_OPTIONS.map((color) => {
-                                const palette = getOverlayPalette(color.id);
-                                const active = tuning.colorDirection === color.id;
-
-                                return (
-                                  <button
-                                    key={`drawer-color-${color.id}`}
-                                    type="button"
-                                    onClick={() => handleColorSelect(color.id)}
-                                    className={cn(
-                                      "rounded-[1.2rem] border px-3 py-3 text-left transition-colors",
-                                      active
-                                        ? "border-cyan-400/35 bg-cyan-400/10"
-                                        : "border-white/10 bg-white/[0.03] hover:border-white/20"
-                                    )}
-                                  >
-                                    <div
-                                      className="h-10 rounded-[0.9rem]"
-                                      style={{
-                                        background: `linear-gradient(135deg, ${palette.shine}, ${palette.mid} 48%, ${palette.base} 100%)`,
-                                      }}
-                                    />
-                                    <div className="mt-2 text-xs font-medium text-white">
-                                      {getColorLabel(color.id)}
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          <div className="rounded-[1.6rem] border border-white/10 bg-white/[0.03] p-4">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                              Custom finish
-                            </div>
-                            <div className="mt-3 grid gap-4">
-                              <div>
-                                <div className="mb-2 text-xs font-medium text-white">
-                                  Part
-                                </div>
-                                <div className="flex gap-2">
-                                  {(["center", "side"] as const).map((part) => (
-                                    <button
-                                      key={part}
-                                      type="button"
-                                      onClick={() => {
-                                        setTuning((current) =>
-                                          normalizePresetTuning(presetId, {
-                                            ...current,
-                                            part,
-                                          })
-                                        );
-                                      }}
-                                      className={cn(
-                                        "rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors",
-                                        tuning.part === part
-                                          ? "border-fuchsia-400/35 bg-fuchsia-400/10 text-fuchsia-100"
-                                          : "border-white/10 text-slate-300 hover:border-white/20 hover:text-white"
-                                      )}
-                                    >
-                                      {part}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {([
-                                {
-                                  key: "softness",
-                                  label: "Softness",
-                                  min: -0.3,
-                                  max: 1,
-                                  step: 0.05,
-                                },
-                                {
-                                  key: "crownVolume",
-                                  label: "Crown volume",
-                                  min: -0.3,
-                                  max: 1,
-                                  step: 0.05,
-                                },
-                                {
-                                  key: "waveBoost",
-                                  label: "Movement",
-                                  min: -0.2,
-                                  max: 1,
-                                  step: 0.05,
-                                },
-                              ] as Array<{
-                                key: keyof Pick<
-                                  PresetTuning,
-                                  "softness" | "crownVolume" | "waveBoost"
-                                >;
-                                label: string;
-                                min: number;
-                                max: number;
-                                step: number;
-                              }>).map((control) => (
-                                <label key={control.key}>
-                                  <div className="flex items-center justify-between gap-3 text-xs text-slate-400">
-                                    <span>{control.label}</span>
-                                    <span>{tuning[control.key].toFixed(2)}</span>
-                                  </div>
-                                  <input
-                                    type="range"
-                                    min={control.min}
-                                    max={control.max}
-                                    step={control.step}
-                                    value={tuning[control.key]}
-                                    onChange={(event) => {
-                                      const nextValue = Number(event.target.value);
-                                      setTuning((current) =>
-                                        normalizePresetTuning(presetId, {
-                                          ...current,
-                                          [control.key]: nextValue,
-                                        })
-                                      );
-                                    }}
-                                    className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-cyan-300"
-                                  />
-                                </label>
-                              ))}
-
-                              <div>
-                                <div className="mb-2 text-xs font-medium text-white">
-                                  Makeover level
-                                </div>
-                                <div className="grid gap-2 sm:grid-cols-3">
-                                  {(["subtle", "signature", "editorial"] as MakeoverLevel[]).map(
-                                    (level) => (
-                                      <button
-                                        key={level}
-                                        type="button"
-                                        onClick={() => setMakeoverLevel(level)}
-                                        className={cn(
-                                          "rounded-[1.2rem] border px-3 py-2 text-left text-xs transition-colors",
-                                          makeoverLevel === level
-                                            ? "border-cyan-400/35 bg-cyan-400/10 text-cyan-100"
-                                            : "border-white/10 text-slate-300 hover:border-white/20 hover:text-white"
-                                        )}
-                                      >
-                                        <div className="font-medium capitalize">{level}</div>
-                                      </button>
-                                    )
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
+          <aside className="space-y-5">
+            <div className="rounded-[2.8rem] border border-[#8e597d]/25 bg-[linear-gradient(180deg,rgba(46,23,55,0.92),rgba(34,18,44,0.96))] p-5 text-white shadow-[0_28px_100px_rgba(70,31,69,0.24)]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ffd6cd]">
+                  Live salon agent
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (speaking) {
+                      stopSpeaking();
+                    }
+                    setVoiceReplyEnabled((current) => !current);
+                  }}
+                  disabled={!voicePlaybackReady}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {voiceReplyEnabled ? (
+                    <Volume2 className="h-3.5 w-3.5" />
+                  ) : (
+                    <VolumeX className="h-3.5 w-3.5" />
                   )}
-                </AnimatePresence>
+                  {voiceReplyEnabled ? "Voice on" : "Voice off"}
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {QUICK_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => {
+                      if (listening) {
+                        recognitionRef.current?.stop();
+                        setListening(false);
+                        setSpeechDraft("");
+                      }
+                      setPreferences(prompt);
+                    }}
+                    className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/85 transition-colors hover:bg-white/[0.16]"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                value={preferences}
+                onChange={(event) => setPreferences(event.target.value)}
+                placeholder="Tell the stylist what you want to change, keep, or avoid..."
+                readOnly={listening}
+                className="mt-4 min-h-[150px] w-full rounded-[1.8rem] border border-white/20 bg-[#1d0f25]/82 p-4 text-sm leading-relaxed text-white outline-none transition-colors placeholder:text-white/35 focus:border-[#f4b680]/45 read-only:cursor-default"
+              />
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  className={cn(
+                    "inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-colors",
+                    listening
+                      ? "bg-rose-500 text-white hover:bg-rose-400"
+                      : "border border-white/20 bg-white/10 text-white hover:bg-white/[0.16]"
+                  )}
+                >
+                  {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  {listening ? "Stop talking" : "Talk to stylist"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAgentSubmit}
+                  disabled={agentLoading}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#f4b680] px-4 text-sm font-semibold text-[#24131d] transition-colors hover:bg-[#ffc896] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  {agentLoading ? "Stylist tuning..." : "Create live mashup"}
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <div className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white/65">
+                  {speechRecognitionSupported ? "Chrome mic ready" : "Mic best in Chrome"}
+                </div>
+                <div className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white/65">
+                  {elevenLabsReady ? "ElevenLabs voice ready" : "Browser voice fallback"}
+                </div>
+              </div>
+
+              {voiceError && (
+                <div className="mt-4 rounded-[1.3rem] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                  {voiceError}
+                </div>
+              )}
+
+              <div className="mt-5 rounded-[1.8rem] border border-white/20 bg-[#1d0f25]/76 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/45">
+                    Stylist response
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void speakReply(agentReply)}
+                    disabled={!voicePlaybackReady || !agentReply.trim()}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Volume2 className="h-3.5 w-3.5" />
+                    Hear it
+                  </button>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-white/88">
+                  {agentReply}
+                </p>
               </div>
             </div>
 
-            {(cameraError || trackingError) && (
-              <div className="mt-4 rounded-[1.5rem] border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-                {cameraError || trackingError}
-              </div>
-            )}
-          </div>
-
-          <aside className="rounded-[2.8rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,249,244,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_28px_100px_rgba(0,0,0,0.32)] backdrop-blur xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
-            <div className="space-y-4">
-              <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                      Returning client memory
-                    </div>
-                    <div className="mt-2 text-2xl font-medium text-white">
-                      {clientMemorySummary ? "Profile loaded" : "Fresh consult"}
-                    </div>
+            <div className="rounded-[2.3rem] border border-[#8e597d]/25 bg-[linear-gradient(180deg,rgba(46,23,55,0.92),rgba(34,18,44,0.96))] p-5 text-white shadow-[0_24px_80px_rgba(67,32,73,0.24)]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ffd6cd]">
+                    Portrait pin
                   </div>
-                  <div className="rounded-full border border-white/10 bg-slate-950/60 px-3 py-1.5 text-xs font-medium text-slate-300">
-                    {clientProfile.updatedAt ? "Saved locally" : "No memory yet"}
+                  <div className="mt-2 text-2xl font-medium text-white">
+                    {portraitPreviewUrl ? "Portrait loaded" : "Drop in a portrait"}
                   </div>
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                  {clientMemorySummary ||
-                    "Once you save or reject looks, the stylist will remember your direction, color preferences, and portrait the next time you open the mirror."}
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {clientProfile.favoritePresetIds.slice(0, 3).map((favoritePresetId) => (
-                    <span
-                      key={`favorite-${favoritePresetId}`}
-                      className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-100"
-                    >
-                      Loves {getHeroPreset(favoritePresetId).shortLabel}
-                    </span>
-                  ))}
-                  {clientProfile.preferredColors.slice(0, 2).map((color) => (
-                    <span
-                      key={`memory-color-${color}`}
-                      className="rounded-full border border-fuchsia-400/20 bg-fuchsia-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-100"
-                    >
-                      {getColorLabel(color)}
-                    </span>
-                  ))}
-                  {clientProfile.rejectedPresetIds.slice(0, 2).map((rejectedPresetId) => (
-                    <span
-                      key={`memory-reject-${rejectedPresetId}`}
-                      className="rounded-full border border-rose-400/20 bg-rose-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-100"
-                    >
-                      Skip {getHeroPreset(rejectedPresetId).shortLabel}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                    Live salon agent
-                  </div>
+                {portraitPreviewUrl ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (speaking) {
-                        stopSpeaking();
-                      }
-                      setVoiceReplyEnabled((current) => !current);
-                    }}
-                    disabled={!voicePlaybackReady}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-cyan-400/30 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {voiceReplyEnabled ? (
-                      <Volume2 className="h-3.5 w-3.5" />
-                    ) : (
-                      <VolumeX className="h-3.5 w-3.5" />
-                    )}
-                    {voiceReplyEnabled ? "Voice on" : "Voice off"}
-                  </button>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {QUICK_PROMPTS.map((prompt) => (
-                    <button
-                      key={prompt}
-                      type="button"
-                      onClick={() => {
-                        if (listening) {
-                          recognitionRef.current?.stop();
-                          setListening(false);
-                          setSpeechDraft("");
-                        }
-                        setPreferences(prompt);
-                      }}
-                      className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-cyan-400/30 hover:text-cyan-200"
-                    >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
-
-                <textarea
-                  value={preferences}
-                  onChange={(event) => setPreferences(event.target.value)}
-                  placeholder="Tell the stylist what you want to change, keep, or avoid..."
-                  readOnly={listening}
-                  className="mt-4 min-h-[140px] w-full rounded-[1.6rem] border border-white/10 bg-slate-950/82 p-4 text-sm leading-relaxed text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-400/40 read-only:cursor-default"
-                />
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={toggleListening}
-                    className={cn(
-                      "inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-colors",
-                      listening
-                        ? "bg-rose-500 text-white hover:bg-rose-400"
-                        : "border border-white/10 text-white hover:border-cyan-400/30 hover:text-cyan-200"
-                    )}
-                  >
-                    {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                    {listening ? "Stop talking" : "Talk to stylist"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleAgentSubmit}
-                    disabled={agentLoading}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-cyan-300 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Wand2 className="h-4 w-4" />
-                    {agentLoading ? "Stylist tuning..." : "Create live mashup"}
-                  </button>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <div className="rounded-full border border-white/10 bg-slate-950/55 px-3 py-1.5 text-xs text-slate-400">
-                    {speechRecognitionSupported ? "Chrome mic ready" : "Mic best in Chrome"}
-                  </div>
-                  <div className="rounded-full border border-white/10 bg-slate-950/55 px-3 py-1.5 text-xs text-slate-400">
-                    {elevenLabsReady ? "ElevenLabs voice ready" : "Browser voice fallback"}
-                  </div>
-                </div>
-
-                {voiceError && (
-                  <div className="mt-4 rounded-[1.3rem] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                    {voiceError}
-                  </div>
-                )}
-
-                <div className="mt-5 rounded-[1.7rem] border border-white/10 bg-slate-950/72 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      Stylist response
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void speakReply(agentReply)}
-                      disabled={!voicePlaybackReady || !agentReply.trim()}
-                      className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-cyan-400/30 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Volume2 className="h-3.5 w-3.5" />
-                      Hear it
-                    </button>
-                  </div>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-200">
-                    {agentReply}
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                      Current look
-                    </div>
-                    <div className="mt-2 text-2xl font-medium text-white">
-                      {preset.label}
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-300">
-                      {preset.description}
-                    </p>
-                  </div>
-                  <div className="rounded-full border border-white/10 bg-slate-950/60 px-3 py-1.5 text-xs font-medium capitalize text-slate-300">
-                    {makeoverLevel}
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={rememberCurrentLook}
-                    className={cn(
-                      "inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-xs font-semibold transition-colors",
-                      currentPresetFavorite
-                        ? "border border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
-                        : "border border-white/10 text-white hover:border-emerald-400/30 hover:text-emerald-200"
-                    )}
-                  >
-                    {currentPresetFavorite ? <Check className="h-3.5 w-3.5" /> : <Heart className="h-3.5 w-3.5" />}
-                    {currentPresetFavorite ? "Saved to profile" : "Love this look"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={rejectCurrentLook}
-                    className={cn(
-                      "inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-xs font-semibold transition-colors",
-                      currentPresetRejected
-                        ? "border border-rose-400/20 bg-rose-400/10 text-rose-100"
-                        : "border border-white/10 text-white hover:border-rose-400/30 hover:text-rose-200"
-                    )}
+                    onClick={() => void removePortrait()}
+                    className="rounded-full border border-white/20 bg-white/10 p-2 text-white/80 transition-colors hover:bg-white/[0.16]"
                   >
                     <X className="h-3.5 w-3.5" />
-                    {currentPresetRejected ? "Marked as avoid" : "Not for me"}
                   </button>
-                </div>
-
-                <div className="mt-4 grid gap-3">
-                  {alternateRecommendations.map((suggestion) => {
-                    const suggestionPresetId =
-                      suggestion.presetId || inferPresetIdFromStyleName(suggestion.name);
-                    const suggestionPreset = getHeroPreset(suggestionPresetId);
-
-                    return (
-                      <button
-                        key={`rail-alt-${suggestionPresetId}`}
-                        type="button"
-                        onClick={() => handlePresetSelect(suggestion.name)}
-                        className="rounded-[1.5rem] border border-white/10 bg-slate-950/65 px-4 py-4 text-left transition-colors hover:border-cyan-400/30 hover:bg-slate-950/80"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="text-sm font-medium text-white">
-                            {suggestionPreset.label}
-                          </div>
-                          <span className="rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                            try this
-                          </span>
-                        </div>
-                        <div className="mt-2 text-sm leading-relaxed text-slate-400">
-                          {suggestion.reason}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.12),transparent_28%),linear-gradient(180deg,rgba(8,15,28,0.92),rgba(8,11,20,0.9))] p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-200">
-                      Premium Gemini render
-                    </div>
-                    <div className="mt-2 text-2xl font-medium text-white">
-                      On your portrait
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void handleRenderLook("manual")}
-                    disabled={renderLookLoading || !premiumPortraitReady}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-blue-300 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    {renderLookLoading ? "Rendering..." : "Render look"}
-                  </button>
-                </div>
-
-                <div className="mt-4 rounded-[1.5rem] border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-300">
-                  {premiumPortraitReady
-                    ? faceLockActive
-                      ? "Portrait is ready and the mirror is tracking. Hold still for the cleanest automatic refresh."
-                      : "Portrait is ready. Turn on the webcam if you want auto-refresh while you test looks."
-                    : "Upload a portrait to unlock the premium Gemini finish and final handoff."}
-                </div>
-
-                {renderLookError && (
-                  <div className="mt-4 rounded-[1.4rem] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                    {renderLookError}
-                  </div>
-                )}
-
-                {renderLook ? (
-                  <div className="mt-5 overflow-hidden rounded-[1.7rem] border border-white/10 bg-white/[0.04]">
-                    <div className="relative aspect-[4/5]">
-                      <Image
-                        src={renderLook.imageDataUrl}
-                        alt={renderLook.title}
-                        fill
-                        unoptimized
-                        sizes="(max-width: 1280px) 100vw, 30vw"
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <div className="text-sm font-medium text-white">
-                        {renderLook.title}
-                      </div>
-                      <p className="mt-2 text-sm leading-relaxed text-slate-300">
-                        {renderLook.brief}
-                      </p>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            downloadDataUrl(
-                              renderLook.imageDataUrl,
-                              `${preset.id}-render.png`
-                            )
-                          }
-                          className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:border-cyan-400/30 hover:text-cyan-200"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          Save image
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setMirrorView("render")}
-                          className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:border-cyan-400/30 hover:text-cyan-200"
-                        >
-                          View in mirror
-                        </button>
-                      </div>
-                    </div>
-                  </div>
                 ) : null}
               </div>
 
-              <div className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_28%),linear-gradient(180deg,rgba(8,15,28,0.92),rgba(8,11,20,0.9))] p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-200">
-                      Final salon handoff
-                    </div>
-                    <div className="mt-2 text-2xl font-medium text-white">
-                      Style board + salons
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void handleGenerateStyleBoard()}
-                    disabled={styleBoardLoading || !premiumPortraitReady}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-amber-300 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    {styleBoardLoading ? "Generating..." : "Generate board"}
-                  </button>
-                </div>
+              <input
+                ref={portraitInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  void handlePortraitSelection(event.target.files?.[0] || null);
+                }}
+                className="hidden"
+              />
 
-                {styleBoardError && (
-                  <div className="mt-4 rounded-[1.4rem] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                    {styleBoardError}
-                  </div>
-                )}
-
-                {styleBoard ? (
-                  <div className="mt-5 overflow-hidden rounded-[1.7rem] border border-white/10 bg-white/[0.04]">
-                    <div className="relative aspect-[4/5]">
-                      <Image
-                        src={styleBoard.imageDataUrl}
-                        alt={styleBoard.title}
-                        fill
-                        unoptimized
-                        sizes="(max-width: 1280px) 100vw, 30vw"
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <div className="text-sm font-medium text-white">
-                        {styleBoard.title}
-                      </div>
-                      <p className="mt-2 text-sm leading-relaxed text-slate-300">
-                        {styleBoard.brief}
-                      </p>
-                      <div className="mt-4">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            downloadDataUrl(
-                              styleBoard.imageDataUrl,
-                              `${preset.id}-style-board.png`
-                            )
-                          }
-                          className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:border-cyan-400/30 hover:text-cyan-200"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          Save board
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
-                <div className="mt-5 rounded-[1.6rem] border border-white/10 bg-white/[0.04] p-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Salon search
-                  </div>
-                  <div className="mt-3 flex flex-col gap-3">
-                    <input
-                      value={location}
-                      onChange={(event) => onLocationChange(event.target.value)}
-                      placeholder="City, neighborhood, or postal code"
-                      className="h-11 rounded-2xl border border-white/10 bg-slate-950/80 px-4 text-sm text-white outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-400/50"
+              <div className="mt-4 overflow-hidden rounded-[1.7rem] border border-white/15 bg-white/[0.08]">
+                {portraitPreviewUrl ? (
+                  <div className="relative aspect-[4/5]">
+                    <Image
+                      src={portraitPreviewUrl}
+                      alt="Portrait dock"
+                      fill
+                      unoptimized
+                      sizes="(max-width: 1280px) 100vw, 30vw"
+                      className="object-cover"
                     />
-                    <button
-                      type="button"
-                      onClick={onFindSalons}
-                      disabled={salonLoading || !preset.label}
-                      className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-medium text-white transition-colors hover:border-cyan-400/30 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <Scissors className="h-4 w-4" />
-                      {salonLoading ? "Matching salons..." : "Find matching salons"}
-                    </button>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex aspect-[4/5] items-center justify-center px-4 text-center text-sm text-white/55">
+                    Upload once and keep the same portrait pinned across visits.
+                  </div>
+                )}
               </div>
 
-              <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Session memory
+              <div className="mt-4 grid gap-2">
+                <button
+                  type="button"
+                  onClick={() => portraitInputRef.current?.click()}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-medium text-white transition-colors hover:bg-white/[0.16]"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  {portraitSaving ? "Saving portrait..." : portraitPreviewUrl ? "Change portrait" : "Upload portrait"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handlePortraitAnalyze()}
+                  disabled={!portraitPreviewUrl || portraitBusy}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#f4b680] px-4 text-sm font-semibold text-[#24131d] transition-colors hover:bg-[#ffc896] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {portraitBusy ? "Analyzing..." : "Analyze portrait"}
+                </button>
+              </div>
+
+              <div className="mt-3 text-xs leading-relaxed text-white/60">
+                {portraitPreviewUrl
+                  ? "Portrait is pinned and keeps Gemini renders consistent while you tune the live mirror."
+                  : "You can still test the mirror without it, but the premium render and final board get stronger once a portrait is pinned."}
+              </div>
+
+              {portraitError && (
+                <div className="mt-3 rounded-[1.2rem] border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+                  {portraitError}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-[2.3rem] border border-[#8e597d]/25 bg-[linear-gradient(180deg,rgba(46,23,55,0.92),rgba(34,18,44,0.96))] p-5 text-white shadow-[0_24px_80px_rgba(67,32,73,0.24)]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ffd6cd]">
+                    Premium Gemini render
                   </div>
-                  <div className="text-xs text-slate-500">
-                    Last {Math.min(sessionTurns.length, 6)} turns
+                  <div className="mt-2 text-2xl font-medium text-white">
+                    On your portrait
                   </div>
                 </div>
-                <div className="mt-4 space-y-3">
-                  {sessionTurns.slice(-4).map((turn, index) => (
-                    <div
-                      key={`${turn.speaker}-${index}-${turn.text.slice(0, 24)}`}
-                      className={cn(
-                        "max-w-[92%] rounded-[1.5rem] border px-4 py-3",
-                        turn.speaker === "user"
-                          ? "ml-auto border-cyan-400/20 bg-cyan-400/10 text-cyan-50"
-                          : "border-white/10 bg-slate-950/65 text-slate-100"
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "text-[10px] font-semibold uppercase tracking-[0.2em]",
-                          turn.speaker === "user" ? "text-cyan-200" : "text-slate-500"
-                        )}
-                      >
-                        {turn.speaker === "user" ? "You" : "Stylist"}
-                      </div>
-                      <p className="mt-1 text-sm leading-relaxed">{turn.text}</p>
+                <button
+                  type="button"
+                  onClick={() => void handleRenderLook("manual")}
+                  disabled={renderLookLoading || !premiumPortraitReady}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#f4b680] px-4 text-sm font-semibold text-[#24131d] transition-colors hover:bg-[#ffc896] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {renderLookLoading ? "Rendering..." : "Render look"}
+                </button>
+              </div>
+
+              <div className="mt-4 rounded-[1.5rem] border border-white/15 bg-[#1d0f25]/72 px-4 py-3 text-sm text-white/70">
+                {premiumPortraitReady
+                  ? faceLockActive
+                    ? "Portrait is ready and tracking is active. Hold still for the cleanest automatic refresh."
+                    : "Portrait is ready. Turn on the webcam if you want auto-refresh while testing looks."
+                  : "Upload a portrait to unlock the premium Gemini finish and final handoff."}
+              </div>
+
+              {renderLookError && (
+                <div className="mt-4 rounded-[1.4rem] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                  {renderLookError}
+                </div>
+              )}
+
+              {renderLook ? (
+                <div className="mt-5 overflow-hidden rounded-[1.7rem] border border-white/15 bg-white/[0.08]">
+                  <div className="relative aspect-[4/5]">
+                    <Image
+                      src={renderLook.imageDataUrl}
+                      alt={renderLook.title}
+                      fill
+                      unoptimized
+                      sizes="(max-width: 1280px) 100vw, 30vw"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <div className="text-sm font-medium text-white">
+                      {renderLook.title}
                     </div>
-                  ))}
+                    <p className="mt-2 text-sm leading-relaxed text-white/70">
+                      {renderLook.brief}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          downloadDataUrl(
+                            renderLook.imageDataUrl,
+                            `${preset.id}-render.png`
+                          )
+                        }
+                        className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/85 transition-colors hover:bg-white/[0.16]"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Save image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMirrorView("render")}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/85 transition-colors hover:bg-white/[0.16]"
+                      >
+                        View in mirror
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-[2.3rem] border border-[#8e597d]/25 bg-[linear-gradient(180deg,rgba(46,23,55,0.92),rgba(34,18,44,0.96))] p-5 text-white shadow-[0_24px_80px_rgba(67,32,73,0.24)]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ffd6cd]">
+                    Final salon handoff
+                  </div>
+                  <div className="mt-2 text-2xl font-medium text-white">
+                    Style board + salons
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleGenerateStyleBoard()}
+                  disabled={styleBoardLoading || !premiumPortraitReady}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#f4b680] px-4 text-sm font-semibold text-[#24131d] transition-colors hover:bg-[#ffc896] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {styleBoardLoading ? "Generating..." : "Generate board"}
+                </button>
+              </div>
+
+              {styleBoardError && (
+                <div className="mt-4 rounded-[1.4rem] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                  {styleBoardError}
+                </div>
+              )}
+
+              {styleBoard ? (
+                <div className="mt-5 overflow-hidden rounded-[1.7rem] border border-white/15 bg-white/[0.08]">
+                  <div className="relative aspect-[4/5]">
+                    <Image
+                      src={styleBoard.imageDataUrl}
+                      alt={styleBoard.title}
+                      fill
+                      unoptimized
+                      sizes="(max-width: 1280px) 100vw, 30vw"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <div className="text-sm font-medium text-white">
+                      {styleBoard.title}
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-white/70">
+                      {styleBoard.brief}
+                    </p>
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          downloadDataUrl(
+                            styleBoard.imageDataUrl,
+                            `${preset.id}-style-board.png`
+                          )
+                        }
+                        className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/85 transition-colors hover:bg-white/[0.16]"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Save board
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-5 rounded-[1.6rem] border border-white/15 bg-[#1d0f25]/72 p-4">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/45">
+                  Salon search
+                </div>
+                <div className="mt-3 flex flex-col gap-3">
+                  <input
+                    value={location}
+                    onChange={(event) => onLocationChange(event.target.value)}
+                    placeholder="City, neighborhood, or postal code"
+                    className="h-11 rounded-2xl border border-white/15 bg-white/10 px-4 text-sm text-white outline-none transition-colors placeholder:text-white/35 focus:border-[#f4b680]/45"
+                  />
+                  <button
+                    type="button"
+                    onClick={onFindSalons}
+                    disabled={salonLoading || !preset.label}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 text-sm font-medium text-white transition-colors hover:bg-white/[0.16] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Scissors className="h-4 w-4" />
+                    {salonLoading ? "Matching salons..." : "Find matching salons"}
+                  </button>
                 </div>
               </div>
             </div>
           </aside>
+        </div>
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-[1.15fr_0.85fr_1fr]">
+          <div className="rounded-[2.3rem] border border-white/35 bg-[linear-gradient(180deg,rgba(46,23,55,0.92),rgba(34,18,44,0.96))] p-5 text-white shadow-[0_24px_80px_rgba(67,32,73,0.24)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ffd6cd]">
+                  Current look
+                </div>
+                <div className="mt-2 text-2xl font-medium text-white">
+                  {preset.label}
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-white/70">
+                  {preset.description}
+                </p>
+              </div>
+              <div className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium capitalize text-white/85">
+                {makeoverLevel}
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={rememberCurrentLook}
+                className={cn(
+                  "inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-xs font-semibold transition-colors",
+                  currentPresetFavorite
+                    ? "border border-emerald-300/25 bg-emerald-300/12 text-emerald-50"
+                    : "border border-white/20 bg-white/10 text-white hover:bg-white/[0.16]"
+                )}
+              >
+                {currentPresetFavorite ? <Check className="h-3.5 w-3.5" /> : <Heart className="h-3.5 w-3.5" />}
+                {currentPresetFavorite ? "Saved to profile" : "Love this look"}
+              </button>
+              <button
+                type="button"
+                onClick={rejectCurrentLook}
+                className={cn(
+                  "inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-xs font-semibold transition-colors",
+                  currentPresetRejected
+                    ? "border border-rose-400/20 bg-rose-400/10 text-rose-100"
+                    : "border border-white/20 bg-white/10 text-white hover:bg-white/[0.16]"
+                )}
+              >
+                <X className="h-3.5 w-3.5" />
+                {currentPresetRejected ? "Marked as avoid" : "Not for me"}
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {stylistNoticing.map((note, index) => (
+                <div
+                  key={`stylist-notice-${index}`}
+                  className="rounded-[1.4rem] border border-white/15 bg-white/[0.08] p-4 text-sm leading-relaxed text-white/75"
+                >
+                  {note}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {alternateRecommendations.slice(0, 3).map((suggestion) => {
+                const suggestionPresetId =
+                  suggestion.presetId || inferPresetIdFromStyleName(suggestion.name);
+                const suggestionPreset = getHeroPreset(suggestionPresetId);
+
+                return (
+                  <button
+                    key={`dock-alt-${suggestionPresetId}`}
+                    type="button"
+                    onClick={() => handlePresetSelect(suggestion.name)}
+                    className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/[0.16]"
+                  >
+                    Try {suggestionPreset.shortLabel}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-[2.3rem] border border-white/35 bg-[linear-gradient(180deg,rgba(46,23,55,0.92),rgba(34,18,44,0.96))] p-5 text-white shadow-[0_24px_80px_rgba(67,32,73,0.24)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ffd6cd]">
+                  Client memory snapshot
+                </div>
+                <div className="mt-2 text-2xl font-medium text-white">
+                  {clientMemorySummary ? "Profile loaded" : "Fresh consult"}
+                </div>
+              </div>
+              <div className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80">
+                {clientProfile.updatedAt ? "Saved locally" : "No memory yet"}
+              </div>
+            </div>
+
+            <p className="mt-3 text-sm leading-relaxed text-white/70">
+              {clientMemorySummary ||
+                "Once you save or reject looks, the stylist will remember your direction, color preferences, and portrait the next time you open the mirror."}
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ffd6cd]">
+                {selectedColorLabel}
+              </span>
+              {clientProfile.favoritePresetIds.slice(0, 2).map((favoritePresetId) => (
+                <span
+                  key={`favorite-${favoritePresetId}`}
+                  className="rounded-full border border-emerald-300/25 bg-emerald-300/12 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-50"
+                >
+                  Loves {getHeroPreset(favoritePresetId).shortLabel}
+                </span>
+              ))}
+              {clientProfile.preferredColors.slice(0, 2).map((color) => (
+                <span
+                  key={`memory-color-${color}`}
+                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85"
+                >
+                  {getColorLabel(color)}
+                </span>
+              ))}
+              {clientProfile.rejectedPresetIds.slice(0, 1).map((rejectedPresetId) => (
+                <span
+                  key={`memory-reject-${rejectedPresetId}`}
+                  className="rounded-full border border-rose-400/20 bg-rose-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-100"
+                >
+                  Skip {getHeroPreset(rejectedPresetId).shortLabel}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[2.3rem] border border-white/35 bg-[linear-gradient(180deg,rgba(46,23,55,0.92),rgba(34,18,44,0.96))] p-5 text-white shadow-[0_24px_80px_rgba(67,32,73,0.24)]">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#ffd6cd]">
+                Session memory
+              </div>
+              <div className="text-xs text-white/45">
+                Last {Math.min(sessionTurns.length, 6)} turns
+              </div>
+            </div>
+            <div className="mt-4 space-y-3">
+              {sessionTurns.slice(-4).map((turn, index) => (
+                <div
+                  key={`${turn.speaker}-${index}-${turn.text.slice(0, 24)}`}
+                  className={cn(
+                    "max-w-[92%] rounded-[1.5rem] border px-4 py-3",
+                    turn.speaker === "user"
+                      ? "ml-auto border-[#f4b680]/30 bg-[#f4b680]/12 text-[#fff2ea]"
+                      : "border-white/15 bg-white/[0.08] text-white/90"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "text-[10px] font-semibold uppercase tracking-[0.2em]",
+                      turn.speaker === "user" ? "text-[#ffd6cd]" : "text-white/45"
+                    )}
+                  >
+                    {turn.speaker === "user" ? "You" : "Stylist"}
+                  </div>
+                  <p className="mt-1 text-sm leading-relaxed">{turn.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {(hasSearchedSalons || salons.length > 0 || salonError) && (
