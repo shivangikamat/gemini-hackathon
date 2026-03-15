@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useRef } from "react";
@@ -6,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LampContainer } from "@/components/ui/lamp";
 import type { HairstyleSuggestion } from "@/lib/types";
 import SelfieUploader from "@/components/SelfieUploader";
+import SalonList from "@/components/SalonList";
 
 export default function Page() {
   const [suggestions, setSuggestions] = useState<HairstyleSuggestion[]>([]);
@@ -269,6 +271,8 @@ export default function Page() {
             </motion.section>
           )}
         </AnimatePresence>
+
+        <SalonList />
       </main>
       
       {/* Super minimal footer */}

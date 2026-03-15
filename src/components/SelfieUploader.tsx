@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,10 +19,8 @@ type Props = {
 
 export default function SelfieUploader({ onResults }: Props) {
   const [loading, setLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [chosenHairstyle, setChosenHairstyle] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.[0]) {
@@ -29,8 +28,6 @@ export default function SelfieUploader({ onResults }: Props) {
       setSelectedFile(file);
       const objectUrl = URL.createObjectURL(file);
       setPreviewUrl(objectUrl);
-      setSuggestions([]);
-      setChosenHairstyle(null);
     }
   };
 
@@ -60,7 +57,6 @@ export default function SelfieUploader({ onResults }: Props) {
       });
 
       const data = await response.json();
-      setSuggestions(data.suggestions);
       if (previewUrl && data.suggestions && data.selfie?.data) {
         onResults?.({
           suggestions: data.suggestions,
@@ -74,11 +70,6 @@ export default function SelfieUploader({ onResults }: Props) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleChooseHairstyle = (hairstyle: string) => {
-    setChosenHairstyle(hairstyle);
-    alert(`You have chosen: ${hairstyle}`);
   };
 
   return (

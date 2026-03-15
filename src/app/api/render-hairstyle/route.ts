@@ -61,12 +61,14 @@ Hairstyle to apply: "${body.hairstyleName}"
       generationConfig: {
         responseMimeType: "image/png",
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     const candidates = result.response.candidates;
     const parts = candidates?.[0]?.content?.parts || [];
 
     const imagePart = parts.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (p: any) => p.inlineData && p.inlineData.data
     ) as { inlineData?: { data: string } } | undefined;
 

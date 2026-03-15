@@ -1,4 +1,4 @@
-// File: /Users/shika/Documents/Project/gemini-hackathon/src/app/api/render-hairstyle/route.ts
+// File: /Users/niranjanvijay/Development/Gemini Hackathon/gemini-hackathon/src/app/api/render-hairstyle/route.ts
 import * as entry from '../../../../../src/app/api/render-hairstyle/route.js'
 import type { NextRequest } from 'next/server.js'
 
