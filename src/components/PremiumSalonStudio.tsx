@@ -180,7 +180,7 @@ const FACE_SCAN_INTERVAL_MS = 180;
 const AUTO_RENDER_DELAY_MS = 1500;
 const AUTO_RENDER_COOLDOWN_MS = 7000;
 const INITIAL_AGENT_REPLY =
-  "Welcome to your private mirror. Tell me the vibe, and I’ll steer the live try-on toward the sharpest preset, then use Gemini to finish it on your portrait.";
+  "Welcome back to the mirror. I’m reading the shape, the finish, and the color direction in real time, then I’ll tune the cut until it looks salon-expensive on you.";
 
 function getSpeechRecognitionConstructor():
   | SpeechRecognitionConstructor
@@ -213,6 +213,59 @@ function distanceBetween(
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function formatFaceShape(faceProfile?: FaceProfile | null) {
+  const faceShape = faceProfile?.faceShape?.trim();
+
+  if (!faceShape || faceShape === "unknown") {
+    return null;
+  }
+
+  return faceShape.replace(/-/g, " ");
+}
+
+function buildPresetStylistReply(params: {
+  presetLabel: string;
+  description: string;
+  colorLabel: string;
+  maintenance?: string | null;
+  faceProfile?: FaceProfile | null;
+  clientSummary?: string | null;
+}) {
+  const faceShape = formatFaceShape(params.faceProfile);
+  const maintenance = params.maintenance?.trim();
+  const memory = params.clientSummary?.trim();
+
+  return [
+    `I’ve pulled ${params.presetLabel} into the mirror because ${params.description.toLowerCase()}`,
+    faceShape
+      ? `On your ${faceShape} shape, this keeps the outline intentional instead of letting the haircut drift wide.`
+      : "This keeps the silhouette intentional and camera-ready.",
+    `I’d keep the finish in ${params.colorLabel.toLowerCase()} so the color reads dimensional and polished, not flat.`,
+    maintenance ? `It still stays ${maintenance.toLowerCase()} to live with.` : null,
+    memory ? `I’m also protecting what you liked before: ${memory.toLowerCase()}.` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function buildPresetStylistSummary(params: {
+  presetLabel: string;
+  colorLabel: string;
+  part: "center" | "side";
+  faceProfile?: FaceProfile | null;
+}) {
+  const faceShape = formatFaceShape(params.faceProfile);
+
+  return [
+    `${params.presetLabel} is sitting in the mirror now.`,
+    `${params.part === "side" ? "An off-centre" : "A centered"} part keeps the finish controlled.`,
+    `The ${params.colorLabel.toLowerCase()} melt adds richer depth.`,
+    faceShape ? `Best tuned around your ${faceShape} proportions.` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 async function urlToDataUrl(url: string) {
@@ -521,7 +574,7 @@ export default function PremiumSalonStudio({
   const [sessionTurns, setSessionTurns] = useState<StyleAgentTurn[]>([
     { speaker: "agent", text: INITIAL_AGENT_REPLY },
   ]);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(true);
   const [drawerCategory, setDrawerCategory] = useState<DrawerCategory>("all");
   const [mirrorView, setMirrorView] = useState<MirrorViewMode>("live");
   const [voiceProvider, setVoiceProvider] = useState<VoiceProvider>("browser");
@@ -582,6 +635,7 @@ export default function PremiumSalonStudio({
   const currentPresetFavorite = clientProfile.favoritePresetIds.includes(presetId);
   const currentPresetRejected = clientProfile.rejectedPresetIds.includes(presetId);
   const clientMemorySummary = describeClientProfile(clientProfile);
+  const selectedColorLabel = getColorLabel(tuning.colorDirection);
 
   const updateClientProfile = useCallback(
     (
@@ -614,6 +668,26 @@ export default function PremiumSalonStudio({
       clientProfile.recentNotes.join(" ")
     );
   }, [clientProfile, preferences]);
+
+  const stylistNoticing = useMemo(() => {
+    const notes = [
+      `${preset.shortLabel} is reading strongest when the perimeter stays ${preset.partDefault === "side" ? "slightly off-centre" : "balanced"} and the crown stays polished.`,
+      `${selectedColorLabel} adds the richer salon finish you asked for, with more depth through the mid-lengths.`,
+      clientMemorySummary
+        ? `I’m carrying forward this memory from your last session: ${clientMemorySummary}.`
+        : "Once you love or reject looks, I’ll hold onto those notes for your next visit.",
+    ];
+
+    if (resolvedFaceProfile?.faceShape && resolvedFaceProfile.faceShape !== "unknown") {
+      notes.splice(
+        1,
+        0,
+        `${formatFaceShape(resolvedFaceProfile)} proportions can handle this shape best when the front stays soft around the cheek and jaw line.`
+      );
+    }
+
+    return notes.slice(0, 3);
+  }, [clientMemorySummary, preset, resolvedFaceProfile, selectedColorLabel]);
 
   const presetLibrary = useMemo(() => {
     const merged = [...suggestions, ...HERO_PRESET_SUGGESTIONS];
@@ -1090,13 +1164,31 @@ export default function PremiumSalonStudio({
     (styleName: string) => {
       const nextPresetId = inferPresetIdFromStyleName(styleName);
       const nextPreset = getHeroPreset(nextPresetId);
+      const nextTuning = normalizePresetTuning(nextPresetId);
+      const nextColorLabel = getColorLabel(nextTuning.colorDirection);
+      const nextReply = buildPresetStylistReply({
+        presetLabel: nextPreset.label,
+        description: nextPreset.description,
+        colorLabel: nextColorLabel,
+        maintenance: nextPreset.maintenance,
+        faceProfile: resolvedFaceProfile,
+        clientSummary: clientMemorySummary,
+      });
 
       skipSyncStyleRef.current = styleName;
       setPresetId(nextPresetId);
-      setTuning(normalizePresetTuning(nextPresetId));
+      setTuning(nextTuning);
       setMakeoverLevel(nextPreset.makeoverBias);
       setMashupName(nextPreset.label);
-      setAgentSummary(`${nextPreset.label} is loaded in the mirror suite.`);
+      setAgentReply(nextReply);
+      setAgentSummary(
+        buildPresetStylistSummary({
+          presetLabel: nextPreset.label,
+          colorLabel: nextColorLabel,
+          part: nextTuning.part,
+          faceProfile: resolvedFaceProfile,
+        })
+      );
       onSelectStyle(nextPreset.label);
       setRenderLook(null);
       setStyleBoard(null);
@@ -1105,15 +1197,27 @@ export default function PremiumSalonStudio({
         maintenancePreference: nextPreset.maintenance,
       });
     },
-    [onSelectStyle, updateClientProfile]
+    [clientMemorySummary, onSelectStyle, resolvedFaceProfile, updateClientProfile]
   );
 
   const handleColorSelect = useCallback(
     (colorName: HairColorName) => {
-      setTuning((current) =>
-        normalizePresetTuning(presetId, {
-          ...current,
-          colorDirection: colorName,
+      const nextTuning = normalizePresetTuning(presetId, {
+        ...tuning,
+        colorDirection: colorName,
+      });
+      const colorLabel = getColorLabel(colorName);
+
+      setTuning(nextTuning);
+      setAgentReply(
+        `I’ve shifted the finish to ${colorLabel.toLowerCase()} so the hair reads richer and more expensive in the mirror. It should feel glossy through the mids and brighter only where the light naturally hits.`
+      );
+      setAgentSummary(
+        buildPresetStylistSummary({
+          presetLabel: preset.label,
+          colorLabel,
+          part: nextTuning.part,
+          faceProfile: resolvedFaceProfile,
         })
       );
       setRenderLook(null);
@@ -1122,7 +1226,7 @@ export default function PremiumSalonStudio({
         preferredColors: [...current.preferredColors, colorName],
       }));
     },
-    [presetId, updateClientProfile]
+    [preset.label, presetId, resolvedFaceProfile, tuning, updateClientProfile]
   );
 
   const handleAgentSubmit = useCallback(async () => {
@@ -1546,8 +1650,8 @@ export default function PremiumSalonStudio({
       (clientMemorySummary || clientProfile.lastPresetId || portraitAsset)
     ) {
       const welcomeBack = clientMemorySummary
-        ? `Welcome back. I remember ${clientMemorySummary.toLowerCase()}. We can refine from there or push in a new direction.`
-        : "Welcome back. Your portrait and styling profile are already in the room.";
+        ? `Welcome back. I still remember ${clientMemorySummary.toLowerCase()}, so I’ll start from that direction and only push where it actually improves the shape.`
+        : "Welcome back. Your portrait is already pinned in the room, so we can move straight into refining the cut, finish, and color.";
 
       setAgentReply(welcomeBack);
       setSessionTurns([{ speaker: "agent", text: welcomeBack }]);
@@ -1794,7 +1898,7 @@ export default function PremiumSalonStudio({
 
   const renderOverlayModeControls =
     renderLook && (
-      <div className="absolute right-4 top-4 z-20 flex gap-2 rounded-full border border-white/12 bg-slate-950/75 p-1 backdrop-blur">
+      <div className="absolute right-4 top-4 z-20 flex gap-2 rounded-full border border-white/12 bg-[#2f1f34]/82 p-1 backdrop-blur">
         {([
           { id: "live", label: "Live" },
           { id: "compare", label: "Compare" },
@@ -1807,8 +1911,8 @@ export default function PremiumSalonStudio({
             className={cn(
               "rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors",
               mirrorView === option.id
-                ? "bg-cyan-300 text-slate-950"
-                : "text-slate-300 hover:text-white"
+                ? "bg-[#f4b680] text-[#24131d]"
+                : "text-[#e7dcd9] hover:text-white"
             )}
           >
             {option.label}

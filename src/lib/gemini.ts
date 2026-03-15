@@ -40,11 +40,11 @@ type GeminiImageInput = {
   mimeType: string;
 } | null;
 
-const PRIMARY_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-pro";
+const PRIMARY_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash";
 const FALLBACK_TEXT_MODEL =
   process.env.GEMINI_TEXT_MODEL_FALLBACK || "gemini-2.5-flash";
 const PRIMARY_IMAGE_MODEL =
-  process.env.GEMINI_IMAGE_MODEL || "gemini-3-pro-image-preview";
+  process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
 const FALLBACK_IMAGE_MODEL =
   process.env.GEMINI_IMAGE_MODEL_FALLBACK || "gemini-2.5-flash-image";
 
@@ -81,6 +81,33 @@ function getRequiredClient() {
   }
 
   return client;
+}
+
+function getErrorStatus(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "status" in error &&
+    typeof (error as { status?: unknown }).status === "number"
+  ) {
+    return (error as { status: number }).status;
+  }
+
+  return null;
+}
+
+function logFallback(kind: "text" | "image", primary: string, fallback: string, error: unknown) {
+  const status = getErrorStatus(error);
+  const reason =
+    status === 429
+      ? "hit quota or access limits"
+      : error instanceof Error
+        ? error.message
+        : "returned an unexpected response";
+
+  console.warn(
+    `Primary Gemini ${kind} model (${primary}) ${reason}. Falling back to ${fallback}.`
+  );
 }
 
 function parseJsonResponse<T>(text: string): T | null {
@@ -154,10 +181,7 @@ async function generateTextContentWithFallback(params: {
       throw primaryError;
     }
 
-    console.warn(
-      `Primary Gemini text model failed (${PRIMARY_TEXT_MODEL}). Falling back to ${FALLBACK_TEXT_MODEL}.`,
-      primaryError
-    );
+    logFallback("text", PRIMARY_TEXT_MODEL, FALLBACK_TEXT_MODEL, primaryError);
 
     return {
       model: FALLBACK_TEXT_MODEL,
@@ -372,15 +396,31 @@ async function generateImagePayload(params: {
   };
 
   let model = PRIMARY_IMAGE_MODEL;
-  let result = await client.models.generateContent({
-    model,
-    ...request,
-  });
+  let result;
+
+  try {
+    result = await client.models.generateContent({
+      model,
+      ...request,
+    });
+  } catch (primaryError) {
+    if (FALLBACK_IMAGE_MODEL === PRIMARY_IMAGE_MODEL) {
+      throw primaryError;
+    }
+
+    logFallback("image", PRIMARY_IMAGE_MODEL, FALLBACK_IMAGE_MODEL, primaryError);
+    model = FALLBACK_IMAGE_MODEL;
+    result = await client.models.generateContent({
+      model,
+      ...request,
+    });
+  }
+
   let generatedImage = extractImageFromResponse(result);
 
   if (!generatedImage && FALLBACK_IMAGE_MODEL !== PRIMARY_IMAGE_MODEL) {
     console.warn(
-      `Primary Gemini image model returned no image (${PRIMARY_IMAGE_MODEL}). Falling back to ${FALLBACK_IMAGE_MODEL}.`
+      `Primary Gemini image model (${PRIMARY_IMAGE_MODEL}) returned no image. Falling back to ${FALLBACK_IMAGE_MODEL}.`
     );
     model = FALLBACK_IMAGE_MODEL;
     result = await client.models.generateContent({

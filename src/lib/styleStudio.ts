@@ -54,34 +54,34 @@ const COLOR_KEYWORDS: Array<{ keywords: string[]; color: HairColorName }> = [
 
 const PALETTES: Record<HairColorName, OverlayPalette> = {
   "soft-black": {
-    base: "#1b1f27",
-    mid: "#303744",
-    shine: "#7a8598",
-    shadow: "#0d1117",
+    base: "#0f1218",
+    mid: "#242b35",
+    shine: "#9aa7bb",
+    shadow: "#05070b",
   },
   espresso: {
-    base: "#2b221d",
-    mid: "#4d3a31",
-    shine: "#8d7364",
-    shadow: "#17110f",
+    base: "#221712",
+    mid: "#56392d",
+    shine: "#b08d79",
+    shadow: "#110b09",
   },
   chestnut: {
-    base: "#5b3528",
-    mid: "#84503d",
-    shine: "#c09279",
-    shadow: "#311c16",
+    base: "#4c291f",
+    mid: "#96563d",
+    shine: "#d5a485",
+    shadow: "#25120f",
   },
   copper: {
-    base: "#813b24",
-    mid: "#b95d37",
-    shine: "#f0a26f",
-    shadow: "#3c1d14",
+    base: "#743219",
+    mid: "#cb6131",
+    shine: "#ffb27e",
+    shadow: "#34140b",
   },
   "golden-blonde": {
-    base: "#967238",
-    mid: "#c89e55",
-    shine: "#f5d799",
-    shadow: "#5a4320",
+    base: "#8f6827",
+    mid: "#d4a349",
+    shine: "#ffe0a3",
+    shadow: "#4f3511",
   },
 };
 
@@ -998,15 +998,15 @@ export function createOverlayFromPreset(
     makeoverLevel: makeoverLevel || preset.makeoverBias,
     salonTags: preset.salonTags,
     layerOpacity: {
-      shadow: 0.28 + normalizedTuning.density * 0.04,
-      back: 0.82,
-      body: 0.94,
+      shadow: 0.34 + normalizedTuning.density * 0.05,
+      back: 0.9,
+      body: 0.98,
       front:
         fringe === "none"
-          ? 0.58
+          ? 0.7
           : preset.silhouette === "curtain"
-            ? 0.84
-            : 0.74,
+            ? 0.92
+            : 0.86,
     },
   };
 }
@@ -1048,10 +1048,10 @@ export function calibrateOverlayToFace(
 
   if (sourceMode === "webcam") {
     fit.scale += 0.02;
-    fit.opacity -= 0.04;
+    fit.opacity += 0.02;
     fit.offsetY -= 2;
   } else if (sourceMode === "selfie") {
-    fit.opacity += 0.02;
+    fit.opacity += 0.04;
   } else {
     fit.offsetY += 2;
   }
@@ -1671,11 +1671,12 @@ Requirements:
 - preserve the person's identity and facial features
 - change the hairstyle only
 - realistic salon-quality hairline and crown placement
-- use a dimensional salon color melt or soft gradient finish in the chosen tone, never flat box-dye color
+- use a rich dimensional salon color melt with visible root shadow, lowlights, and polished shine in the chosen tone, never flat box-dye color
 - premium beauty editorial lighting
 - shoulders-up framing
 - no text, no collage, no split screen, no watermark
 - the hairstyle must look wearable, flattering, and intentionally cut for this face
+- hair should read glossy, dense, and convincingly real instead of airy, faded, or semi-transparent
 `.trim();
 }
 
@@ -1721,8 +1722,9 @@ Requirements:
 - one finished look only, not a collage
 - shoulders-up framing with clean negative space
 - hairstyle silhouette and texture must read clearly
-- the color direction should feel dimensional and expensive, with salon-grade tonal variation instead of a flat fill
+- the color direction should feel dimensional and expensive, with salon-grade tonal variation, root depth, and reflective shine instead of a flat fill
 - preserve the person's identity if a reference portrait is supplied
 - no text, no watermark
+- the hair must look dense, premium, and vividly finished, not faded or washed out
 `.trim();
 }

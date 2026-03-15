@@ -345,9 +345,12 @@ export default function HairstyleOverlay({
   const gradientId = `${id}-hair-gradient`;
   const shineId = `${id}-hair-shine`;
   const shadowId = `${id}-hair-shadow`;
+  const lowlightId = `${id}-hair-lowlight`;
+  const strandId = `${id}-hair-strand`;
   const palette = getOverlayPalette(config.colorName);
-  const glossStrength = 0.45 + Math.max(0, config.tuning.sleekness) * 0.25;
-  const shadowSpread = 24 + config.tuning.crownVolume * 4;
+  const glossStrength = 0.56 + Math.max(0, config.tuning.sleekness) * 0.28;
+  const shadowSpread = 28 + config.tuning.crownVolume * 5;
+  const strandOpacity = 0.16 + Math.max(0, config.tuning.sleekness) * 0.08;
 
   return (
     <div
@@ -367,23 +370,34 @@ export default function HairstyleOverlay({
     >
       <svg
         viewBox="0 0 100 140"
-        className="h-full w-full drop-shadow-[0_18px_36px_rgba(15,23,42,0.48)]"
+        className="h-full w-full drop-shadow-[0_24px_42px_rgba(8,10,14,0.54)]"
         aria-hidden="true"
       >
         <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={palette.shine} />
-            <stop offset={`${28 + glossStrength * 18}%`} stopColor={palette.mid} />
+          <linearGradient id={gradientId} x1="6%" y1="0%" x2="88%" y2="100%">
+            <stop offset="0%" stopColor={palette.shadow} />
+            <stop offset={`${18 + glossStrength * 14}%`} stopColor={palette.shine} />
+            <stop offset={`${48 + glossStrength * 10}%`} stopColor={palette.mid} />
             <stop offset="100%" stopColor={palette.base} />
           </linearGradient>
           <linearGradient id={shineId} x1="50%" y1="0%" x2="50%" y2="100%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.58)" />
-            <stop offset="45%" stopColor="rgba(255,255,255,0.18)" />
+            <stop offset="0%" stopColor="rgba(255,255,255,0.78)" />
+            <stop offset="36%" stopColor="rgba(255,255,255,0.24)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </linearGradient>
+          <linearGradient id={lowlightId} x1="18%" y1="0%" x2="80%" y2="100%">
+            <stop offset="0%" stopColor={palette.shadow} stopOpacity="0.82" />
+            <stop offset="55%" stopColor={palette.base} stopOpacity="0.24" />
+            <stop offset="100%" stopColor={palette.shadow} stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id={strandId} x1="18%" y1="8%" x2="82%" y2="92%">
+            <stop offset="0%" stopColor={palette.shine} stopOpacity="0.78" />
+            <stop offset="44%" stopColor={palette.mid} stopOpacity="0.36" />
+            <stop offset="100%" stopColor={palette.base} stopOpacity="0" />
+          </linearGradient>
           <radialGradient id={shadowId} cx="50%" cy="26%" r="62%">
-            <stop offset="0%" stopColor={palette.shadow} stopOpacity="0.52" />
-            <stop offset={`${shadowSpread}%`} stopColor={palette.shadow} stopOpacity="0.16" />
+            <stop offset="0%" stopColor={palette.shadow} stopOpacity="0.68" />
+            <stop offset={`${shadowSpread}%`} stopColor={palette.shadow} stopOpacity="0.24" />
             <stop offset="100%" stopColor={palette.shadow} stopOpacity="0" />
           </radialGradient>
         </defs>
@@ -398,6 +412,39 @@ export default function HairstyleOverlay({
         />
 
         {renderPresetLayers(config, gradientId, shineId)}
+
+        <path
+          d="M27 24 C36 41 38 72 34 112"
+          stroke={`url(#${strandId})`}
+          strokeWidth={2.3}
+          strokeLinecap="round"
+          opacity={strandOpacity}
+          fill="none"
+        />
+        <path
+          d="M50 18 C55 42 56 74 52 120"
+          stroke={`url(#${strandId})`}
+          strokeWidth={2.1}
+          strokeLinecap="round"
+          opacity={strandOpacity + 0.04}
+          fill="none"
+        />
+        <path
+          d="M72 24 C64 42 62 74 66 114"
+          stroke={`url(#${strandId})`}
+          strokeWidth={2.2}
+          strokeLinecap="round"
+          opacity={strandOpacity}
+          fill="none"
+        />
+        <path
+          d="M18 44 C30 36 42 34 50 34 C61 34 72 37 84 45"
+          fill="none"
+          stroke={`url(#${lowlightId})`}
+          strokeWidth={6}
+          strokeLinecap="round"
+          opacity={0.24 + Math.max(0, config.tuning.density) * 0.08}
+        />
       </svg>
     </div>
   );
