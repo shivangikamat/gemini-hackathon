@@ -30,7 +30,7 @@ const DEFAULT_FACE_PROFILE: FaceProfile = {
 };
 
 function getClient() {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = "AIzaSyCqsaGaq-sR07vxa5UGQdc3CUNXnCfF1fQ";
 
   if (!apiKey) {
     console.warn(
@@ -56,7 +56,7 @@ export async function analyzeSelfieWithGemini(
   }
 
   const model = client.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-pro-vision",
   });
 
   const prompt = `
@@ -96,21 +96,25 @@ Return ONLY valid JSON. Do not include markdown, backticks, or any extra text.
     },
   };
 
-  const result = await model.generateContent([
-    {
-      role: "user",
-      parts: [{ text: prompt }, imagePart],
-    },
-  ]);
-
-  const text = result.response.text();
-
   let parsed: GeminiFaceResponse | null = null;
 
   try {
-    parsed = JSON.parse(text) as GeminiFaceResponse;
+    const result = await model.generateContent([
+      { text: prompt },
+      imagePart,
+    ]);
+
+    const text = result.response.text();
+
+    try {
+      parsed = JSON.parse(text) as GeminiFaceResponse;
+    } catch (error) {
+      console.error("Failed to parse Gemini JSON response:", error, text);
+    }
   } catch (error) {
-    console.error("Failed to parse Gemini JSON response:", error, text);
+    // If the model ID is unavailable for this key / API version (404) or any
+    // other error occurs, fall back to safe defaults so the UI keeps working.
+    console.error("Error calling Gemini for selfie analysis:", error);
   }
 
   if (

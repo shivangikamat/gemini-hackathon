@@ -11,6 +11,8 @@ type Props = {
   onResults?: (payload: {
     suggestions: Suggestion[];
     imageUrl: string;
+    selfieBase64: string;
+    mimeType: string;
   }) => void;
 };
 
@@ -59,10 +61,12 @@ export default function SelfieUploader({ onResults }: Props) {
 
       const data = await response.json();
       setSuggestions(data.suggestions);
-      if (previewUrl && data.suggestions) {
+      if (previewUrl && data.suggestions && data.selfie?.data) {
         onResults?.({
           suggestions: data.suggestions,
           imageUrl: previewUrl,
+          selfieBase64: data.selfie.data,
+          mimeType: data.selfie.mimeType || "image/jpeg",
         });
       }
     } catch (error) {

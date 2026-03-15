@@ -9,17 +9,25 @@ import SelfieUploader from "@/components/SelfieUploader";
 
 export default function Page() {
   const [suggestions, setSuggestions] = useState<HairstyleSuggestion[]>([]);
-  const [loading, setLoading] = useState(false);
   const [selfieUrl, setSelfieUrl] = useState<string | null>(null);
+  const [selfieBase64, setSelfieBase64] = useState<string | null>(null);
+  const [selfieMime, setSelfieMime] = useState<string | null>(null);
+  const [renderedImages, setRenderedImages] = useState<Record<string, string>>(
+    {}
+  );
 
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
   const handleResults = (payload: {
     suggestions: HairstyleSuggestion[];
     imageUrl: string;
+    selfieBase64: string;
+    mimeType: string;
   }) => {
     setSuggestions(payload.suggestions || []);
     setSelfieUrl(payload.imageUrl);
+    setSelfieBase64(payload.selfieBase64);
+    setSelfieMime(payload.mimeType);
 
     if (resultsRef.current) {
       resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -29,6 +37,35 @@ export default function Page() {
   const handleScrollToUpload = () => {
     if (resultsRef.current) {
       resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const handleRenderHairstyle = async (styleName: string) => {
+    if (!selfieBase64 || !selfieMime) return;
+
+    // Avoid re-rendering if we already have an image for this style.
+    if (renderedImages[styleName]) return;
+
+    const res = await fetch("/api/render-hairstyle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        hairstyleName: styleName,
+        selfieBase64,
+        mimeType: selfieMime,
+      }),
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    if (data.image) {
+      setRenderedImages((prev) => ({
+        ...prev,
+        [styleName]: data.image as string,
+      }));
     }
   };
 
@@ -177,14 +214,20 @@ export default function Page() {
                     className="group overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50 hover:bg-slate-900/80 transition-colors"
                   >
                     <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-800">
-                      {selfieUrl ? (
+                      {renderedImages[style.name] ? (
+                        <img
+                          src={renderedImages[style.name]}
+                          alt={style.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : selfieUrl ? (
                         <>
                           <img
                             src={selfieUrl}
                             alt="Your selfie with hairstyle overlay"
                             className="h-full w-full object-cover opacity-90"
                           />
-                          {/* Simple overlay: map style name to a hairstyle sticker */}
+                          {/* Fallback overlay while Gemini renders a bespoke image */}
                           <img
                             src={
                               style.name.toLowerCase().includes("bob")
@@ -210,8 +253,14 @@ export default function Page() {
                     <div className="p-6">
                       <h3 className="text-lg font-medium text-white mb-2">{style.name}</h3>
                       <p className="text-sm text-slate-400 line-clamp-3 leading-relaxed">{style.reason}</p>
-                      <button className="mt-6 w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-sm font-medium text-white transition-colors">
-                        Book this style
+                      <button
+                        className="mt-6 w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-sm font-medium text-white transition-colors"
+                        onClick={() => handleRenderHairstyle(style.name)}
+                        disabled={!selfieBase64}
+                      >
+                        {renderedImages[style.name]
+                          ? "Rendered with Gemini"
+                          : "Render with Gemini"}
                       </button>
                     </div>
                   </motion.article>
