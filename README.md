@@ -18,7 +18,7 @@ Welcome to the **Gemini Hackathon** project! This is an innovative Next.js web a
 - **UI & Styling**: React 18, [Tailwind CSS 4](https://tailwindcss.com/), Framer Motion, Lucide React
 - **AI Model**: Google's [Gemini API](https://ai.google.dev/) (`@google/genai` & `@google/generative-ai`)
 
-## 🚀 Getting Started
+## Getting Started
 
 Follow these steps to set up the project locally.
 
