@@ -9,8 +9,8 @@ Welcome to the **Gemini Hackathon** project! This is an innovative Next.js web a
   - Face Shape (e.g., oval, round, square, heart, diamond, oblong)
   - Hair Texture (e.g., straight, wavy, curly, coily)
   - Skin Tone
-- ** Personalized Recommendations**: Get 3 tailored hairstyle suggestions uniquely suited for your features, complete with professional reasoning.
-- ** AI Image Generation**: Preview the new hairstyles seamlessly integrated onto your original selfie while preserving your identity, skin tone, and lighting.
+- **Personalized Recommendations**: Get 3 tailored hairstyle suggestions uniquely suited for your features, complete with professional reasoning.
+- **AI Image Generation**: Preview the new hairstyles seamlessly integrated onto your original selfie while preserving your identity, skin tone, and lighting.
 
 ##  Tech Stack
 
